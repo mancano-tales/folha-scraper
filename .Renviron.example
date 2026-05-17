@@ -1,0 +1,8 @@
+# Copie este arquivo para ~/.Renviron (Windows: C:\Users\<seu-user>\.Renviron)
+# e preencha com sua chave da DeepSeek.
+
+DEEPSEEK_API_KEY=sk-...
+
+# Opcional: caminho customizado para o banco SQLite.
+# Default: data/folha.sqlite (relativo à raiz do repo)
+# FOLHA_SCRAPER_DB=/caminho/absoluto/para/folha.sqlite

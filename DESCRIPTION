@@ -1,0 +1,30 @@
+Package: folhascraper
+Title: Folha de Sao Paulo Scraper for Academic Research
+Version: 0.1.0
+Authors@R: person("Tales", "Mancano", email = "talesmanz01@gmail.com", role = c("aut", "cre"))
+Description: Coleta sistematica e classificacao automatica de noticias da Folha de
+    Sao Paulo, com suporte a multiplos projetos de pesquisa compartilhando um banco
+    unico de artigos coletados.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 4.2.0)
+Imports:
+    DBI,
+    RSQLite,
+    httr2,
+    rvest,
+    dplyr,
+    purrr,
+    tidyr,
+    stringr,
+    stringdist,
+    stringi,
+    glue,
+    lubridate,
+    jsonlite,
+    readr,
+    tibble
+Suggests:
+    testthat (>= 3.0.0)
+RoxygenNote: 7.3.0
