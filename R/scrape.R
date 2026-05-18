@@ -67,12 +67,44 @@ parse_article_fulltext <- function(page_html) {
     if (nchar(text) > 100) return(text)
   }
 
-  # Era 1: anos 90 (layout em tabela)
-  for (sel in c("td[style*='padding']", "td.content", "table td")) {
+  # Era 1/2 (anos 90 / 2000): layout em tabela arcaica, sem classes úteis,
+  # texto separado por <br>. Heurística: pega o <td> com maior bloco de texto.
+  # Cobre os formatos /fsp/*.htm (Folha de S.Paulo impressa, arquivo histórico).
+  # Tentativas dirigidas primeiro
+  for (sel in c("td[style*='padding']", "td.content")) {
     body <- page_html |> html_element(sel)
     if (!is.na(body)) {
       text <- body |> html_text2() |> str_trim()
       if (nchar(text) > 200) return(text)
+    }
+  }
+  # Fallback heurístico: maior <td> por tamanho de texto.
+  # Em /fsp/*.htm o conteúdo costuma vir prefixado/sufixado por linhas de
+  # navegação ("Texto Anterior", "Próximo Texto", "Índice"); limpamos.
+  tds <- page_html |> html_elements("td")
+  if (length(tds) > 0) {
+    texts <- vapply(tds, \(td) {
+      t <- tryCatch(html_text2(td), error = function(e) "")
+      str_trim(t)
+    }, character(1))
+    sizes <- nchar(texts)
+    if (length(sizes) > 0) {
+      best <- which.max(sizes)
+      if (sizes[best] > 200) {
+        candidate <- texts[best]
+        # Remove linhas/segmentos de navegação típicos do arquivo histórico
+        candidate <- candidate |>
+          str_replace_all("(?m)^\\s*(Texto Anterior|Próximo Texto|Índice)[^\\n]*$", "") |>
+          str_replace_all("Texto Anterior:\\s*[^\\n]*", "") |>
+          str_replace_all("Próximo Texto:\\s*[^\\n]*", "") |>
+          str_replace_all("(?m)^\\s*Índice\\s*$", "") |>
+          str_replace_all("\\n{3,}", "\n\n") |>
+          str_trim()
+        # Após limpeza, descarta se for só copyright
+        if (nchar(candidate) > 200 && !grepl("^Copyright", candidate)) {
+          return(candidate)
+        }
+      }
     }
   }
 
