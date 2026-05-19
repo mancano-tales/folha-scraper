@@ -25,6 +25,11 @@ APP_ROOT <- if (file.exists(file.path(.candidate, "R", "db.R"))) {
 }
 rm(.candidate)
 
+# Crítico: Shiny seta getwd() para app/ durante runApp(). Os módulos R/
+# (db.R, scrape.R) usam paths relativos (inst/migrations, data/folha.sqlite).
+# Setamos cwd para a raiz do repo para que eles funcionem.
+setwd(APP_ROOT)
+
 # Carrega todos os módulos R/.
 for (.f in c("db.R", "utils.R", "scrape.R", "dedup.R",
              "projects.R", "llm.R", "pipeline.R", "export.R")) {
