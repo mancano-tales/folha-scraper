@@ -154,7 +154,7 @@ ui <- bslib::page_navbar(
       p(style = "color:#6b7280;",
         "Cada projeto define keywords, datas e temas de uma pesquisa. ",
         "Artigos são coletados uma vez e compartilhados entre projetos."),
-      DTOutput("projects_table"),
+      DT::DTOutput("projects_table"),
       p(class = "footer-note",
         "Dica: clique numa linha para abrir o projeto.")
     )
@@ -234,10 +234,10 @@ server <- function(input, output, session) {
     db_op(\(con) project_list(con, include_archived = TRUE))
   })
 
-  output$projects_table <- renderDT({
+  output$projects_table <- DT::renderDT({
     df <- projects_df()
     if (nrow(df) == 0) {
-      return(datatable(
+      return(DT::datatable(
         data.frame(Mensagem = "Nenhum projeto. Use o botão + Novo projeto para criar."),
         options = list(dom = "t", paging = FALSE, info = FALSE, ordering = FALSE),
         rownames = FALSE
@@ -253,7 +253,7 @@ server <- function(input, output, session) {
       Artigos   = fmt_int(df$n_articles),
       stringsAsFactors = FALSE
     )
-    datatable(
+    DT::datatable(
       show,
       selection = "single",
       escape    = FALSE,
@@ -480,7 +480,7 @@ server <- function(input, output, session) {
                        style = "margin-left: 8px;")
         )
       ),
-      DTOutput("keywords_table"),
+      DT::DTOutput("keywords_table"),
       p(class = "footer-note",
         "Keywords com status ", em("pendente"),
         " serão processadas na próxima rodada. ",
@@ -488,10 +488,10 @@ server <- function(input, output, session) {
     )
   })
 
-  output$keywords_table <- renderDT({
+  output$keywords_table <- DT::renderDT({
     df <- current_keywords()
     if (nrow(df) == 0) {
-      return(datatable(
+      return(DT::datatable(
         data.frame(Mensagem = "Nenhuma keyword. Adicione uma para começar."),
         options = list(dom = "t", paging = FALSE, info = FALSE, ordering = FALSE),
         rownames = FALSE
@@ -509,7 +509,7 @@ server <- function(input, output, session) {
       Adicionada = format(as.POSIXct(df$added_at), "%d/%m %H:%M"),
       check.names = FALSE, stringsAsFactors = FALSE
     )
-    datatable(
+    DT::datatable(
       show, selection = "single", escape = FALSE, rownames = FALSE,
       class = "compact stripe hover",
       options = list(
@@ -768,7 +768,7 @@ server <- function(input, output, session) {
                       placeholder = "ex.: cota racial"))
       ),
       uiOutput("corpus_count_summary"),
-      DTOutput("corpus_table")
+      DT::DTOutput("corpus_table")
     )
   })
 
@@ -803,10 +803,10 @@ server <- function(input, output, session) {
       "Exibindo ", strong(fmt_int(fltd)), " de ", strong(fmt_int(total)), " artigos.")
   })
 
-  output$corpus_table <- renderDT({
+  output$corpus_table <- DT::renderDT({
     df <- corpus_filtered()
     if (nrow(df) == 0) {
-      return(datatable(data.frame(Mensagem = "Nenhum artigo com esses filtros."),
+      return(DT::datatable(data.frame(Mensagem = "Nenhum artigo com esses filtros."),
                         options = list(dom="t"), rownames = FALSE))
     }
     show <- data.frame(
@@ -821,7 +821,7 @@ server <- function(input, output, session) {
       `Fulltext (chars)` = ifelse(is.na(df$full_text), 0L, nchar(df$full_text)),
       check.names = FALSE, stringsAsFactors = FALSE
     )
-    datatable(
+    DT::datatable(
       show, selection = "single", escape = FALSE, rownames = FALSE,
       class = "compact stripe hover",
       options = list(
