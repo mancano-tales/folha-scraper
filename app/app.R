@@ -5,8 +5,25 @@
 #             folhascraper::run_app() se carregou via R/run_app.R.
 # =============================================================================
 
-# global.R já carregou shiny, bslib, DT, htmltools, e os módulos R/.
-# Garantia caso este arquivo seja sourceado isolado:
+# Belt & suspenders: força attach de todos os pacotes que o app precisa.
+# Necessário porque em algumas sessões (RStudio com renv, opções específicas
+# ou múltiplas instalações de R em paralelo) library() de dentro de arquivos
+# sourceados não propaga para o search path onde o body de renderDT executa.
+# Aqui no nível do app, executa no contexto principal e garante a propagação.
+suppressPackageStartupMessages({
+  library(shiny)
+  library(bslib)
+  library(DT)
+  library(htmltools)
+  library(DBI)
+  library(RSQLite)
+  library(tibble)
+  library(dplyr)
+  library(jsonlite)
+  library(callr)
+})
+
+# global.R carrega os módulos R/ e configura APP_ROOT / DB_PATH / LOG_DIR.
 if (!exists("APP_ROOT")) source(file.path(getwd(), "global.R"))
 
 # -----------------------------------------------------------------------------

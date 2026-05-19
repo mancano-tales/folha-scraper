@@ -53,7 +53,7 @@ process_keyword <- function(con, project, keyword_row, skip_llm = FALSE,
   results <- dedup_internal(results)
 
   # --- Fase 3: separa entre artigos já no banco × novos ---
-  existing_urls <- dbGetQuery(con,
+  existing_urls <- DBI::dbGetQuery(con,
     "SELECT url_clean FROM articles WHERE url_clean IN ("
     |> paste0(paste(rep("?", nrow(results)), collapse = ","), ")"),
     params = as.list(results$url_clean)
@@ -67,7 +67,7 @@ process_keyword <- function(con, project, keyword_row, skip_llm = FALSE,
 
   # --- Fase 4: fuzzy dedup contra títulos do BANCO INTEIRO ---
   if (nrow(candidates_new) > 0) {
-    all_title_norms <- dbGetQuery(con,
+    all_title_norms <- DBI::dbGetQuery(con,
       "SELECT title_norm FROM articles WHERE title_norm IS NOT NULL")$title_norm
     fz <- dedup_fuzzy(candidates_new, all_title_norms)
     candidates_new <- fz$new_clean
@@ -100,7 +100,7 @@ process_keyword <- function(con, project, keyword_row, skip_llm = FALSE,
   }
 
   # --- Fase 6: coleta de fulltext (apenas para os 'pending') ---
-  to_fetch <- dbGetQuery(con,
+  to_fetch <- DBI::dbGetQuery(con,
     "SELECT a.url_clean FROM articles a
      JOIN project_articles pa ON pa.url_clean = a.url_clean
      WHERE pa.project_id = ?
@@ -125,7 +125,7 @@ process_keyword <- function(con, project, keyword_row, skip_llm = FALSE,
     if (is.null(api_key)) api_key <- get_api_key()
     examples <- load_few_shot(con, project$id, n_few_shot)
 
-    to_classify <- dbGetQuery(con,
+    to_classify <- DBI::dbGetQuery(con,
       "SELECT a.url_clean, a.title, a.excerpt, a.full_text,
               pa.matched_keywords
        FROM articles a

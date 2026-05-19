@@ -55,9 +55,9 @@ project_create <- function(con, name, date_start, date_end,
   if (is.na(ds_iso) || is.na(de_iso)) {
     stop("date_start e date_end devem ser parseáveis como Date.")
   }
-  themes_json <- toJSON(themes, auto_unbox = FALSE)
+  themes_json <- jsonlite::toJSON(themes, auto_unbox = FALSE)
 
-  dbExecute(con,
+  DBI::dbExecute(con,
     "INSERT INTO projects
       (name, slug, description, date_start, date_end, themes_json, status, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)",
@@ -65,7 +65,7 @@ project_create <- function(con, name, date_start, date_end,
                   ds_iso, de_iso, themes_json, now, now)
   )
 
-  dbGetQuery(con, "SELECT last_insert_rowid() AS id")$id[1]
+  DBI::dbGetQuery(con, "SELECT last_insert_rowid() AS id")$id[1]
 }
 
 #' Lista todos os projetos no banco
@@ -89,7 +89,7 @@ project_list <- function(con, include_archived = FALSE) {
         FROM projects p"
   if (!include_archived) q <- paste(q, "WHERE p.status = 'active'")
   q <- paste(q, "ORDER BY p.updated_at DESC")
-  dbGetQuery(con, q) |> as_tibble()
+  DBI::dbGetQuery(con, q) |> tibble::as_tibble()
 }
 
 #' Recupera um projeto por id ou nome
@@ -103,14 +103,14 @@ project_list <- function(con, include_archived = FALSE) {
 #' @export
 project_get <- function(con, id_or_name) {
   if (is.numeric(id_or_name)) {
-    res <- dbGetQuery(con, "SELECT * FROM projects WHERE id = ?", params = list(id_or_name))
+    res <- DBI::dbGetQuery(con, "SELECT * FROM projects WHERE id = ?", params = list(id_or_name))
   } else {
-    res <- dbGetQuery(con, "SELECT * FROM projects WHERE name = ? OR slug = ?",
+    res <- DBI::dbGetQuery(con, "SELECT * FROM projects WHERE name = ? OR slug = ?",
                       params = list(id_or_name, id_or_name))
   }
   if (nrow(res) == 0) return(NULL)
   out <- as.list(res[1, ])
-  out$themes <- if (!is.na(out$themes_json)) fromJSON(out$themes_json) else character(0)
+  out$themes <- if (!is.na(out$themes_json)) jsonlite::fromJSON(out$themes_json) else character(0)
   out
 }
 
@@ -121,7 +121,7 @@ project_get <- function(con, id_or_name) {
 #' @return `NULL` invisivelmente.
 #' @export
 project_archive <- function(con, project_id) {
-  dbExecute(con, "UPDATE projects SET status = 'archived', updated_at = ? WHERE id = ?",
+  DBI::dbExecute(con, "UPDATE projects SET status = 'archived', updated_at = ? WHERE id = ?",
             params = list(iso_now(), project_id))
 }
 
@@ -158,13 +158,13 @@ project_add_keyword <- function(con, project_id, keyword,
 
   tryCatch(
     {
-      dbExecute(con,
+      DBI::dbExecute(con,
         "INSERT INTO project_keywords
           (project_id, keyword, date_start_override, date_end_override, status, added_at)
          VALUES (?, ?, ?, ?, 'pending', ?)",
         params = list(project_id, keyword, ds, de, iso_now())
       )
-      dbExecute(con, "UPDATE projects SET updated_at = ? WHERE id = ?",
+      DBI::dbExecute(con, "UPDATE projects SET updated_at = ? WHERE id = ?",
                 params = list(iso_now(), project_id))
       "inserted"
     },
@@ -192,7 +192,7 @@ project_keywords <- function(con, project_id, status = NULL) {
     params <- c(params, list(status))
   }
   q <- paste(q, "ORDER BY added_at ASC")
-  dbGetQuery(con, q, params = params) |> as_tibble()
+  DBI::dbGetQuery(con, q, params = params) |> tibble::as_tibble()
 }
 
 project_keyword_mark <- function(con, keyword_id, status,
@@ -221,13 +221,13 @@ project_keyword_mark <- function(con, keyword_id, status,
     params <- c(params, list(iso_now()))
   }
   params <- c(params, list(keyword_id))
-  dbExecute(con, paste("UPDATE project_keywords SET", sets, "WHERE id = ?"),
+  DBI::dbExecute(con, paste("UPDATE project_keywords SET", sets, "WHERE id = ?"),
             params = params)
 }
 
 # Resolve as datas efetivas de uma keyword (override > projeto), formato Folha.
 keyword_effective_dates <- function(con, project_id, keyword_id) {
-  kw_row <- dbGetQuery(con,
+  kw_row <- DBI::dbGetQuery(con,
     "SELECT k.date_start_override, k.date_end_override,
             p.date_start, p.date_end
      FROM project_keywords k
@@ -246,7 +246,7 @@ keyword_effective_dates <- function(con, project_id, keyword_id) {
 # Classifications (LLM) — leitura/escrita
 # -----------------------------------------------------------------------------
 classification_get <- function(con, project_id, url_clean) {
-  res <- dbGetQuery(con,
+  res <- DBI::dbGetQuery(con,
     "SELECT * FROM classifications WHERE project_id = ? AND url_clean = ?",
     params = list(project_id, url_clean))
   if (nrow(res) == 0) NULL else as.list(res[1, ])
@@ -255,9 +255,9 @@ classification_get <- function(con, project_id, url_clean) {
 classification_upsert <- function(con, project_id, url_clean,
                                    relevant, justification, themes, summary,
                                    model = NA, n_few_shot = NA, error_msg = NA) {
-  dbExecute(con, "DELETE FROM classifications WHERE project_id = ? AND url_clean = ?",
+  DBI::dbExecute(con, "DELETE FROM classifications WHERE project_id = ? AND url_clean = ?",
             params = list(project_id, url_clean))
-  dbExecute(con,
+  DBI::dbExecute(con,
     "INSERT INTO classifications
       (project_id, url_clean, relevant, justification, themes, summary,
        model, n_few_shot, error_msg, classified_at)
@@ -271,15 +271,15 @@ classification_upsert <- function(con, project_id, url_clean,
 # Few-shot examples
 # -----------------------------------------------------------------------------
 few_shot_list <- function(con, project_id) {
-  dbGetQuery(con, "SELECT * FROM few_shot_examples WHERE project_id = ? ORDER BY added_at",
-             params = list(project_id)) |> as_tibble()
+  DBI::dbGetQuery(con, "SELECT * FROM few_shot_examples WHERE project_id = ? ORDER BY added_at",
+             params = list(project_id)) |> tibble::as_tibble()
 }
 
 few_shot_add <- function(con, project_id, title, relevante,
                           temas = NA, resumo = NA, justificativa = NA,
                           url_clean = NA, content_excerpt = NA,
                           keywords_matched = NA, notes = NA) {
-  dbExecute(con,
+  DBI::dbExecute(con,
     "INSERT INTO few_shot_examples
       (project_id, url_clean, title, content_excerpt, keywords_matched,
        relevante, justificativa, temas, resumo, notes, added_at)
@@ -294,20 +294,20 @@ few_shot_add <- function(con, project_id, title, relevante,
 # Runs
 # -----------------------------------------------------------------------------
 run_start <- function(con, project_id, keywords, skip_llm = FALSE) {
-  dbExecute(con,
+  DBI::dbExecute(con,
     "INSERT INTO runs (project_id, started_at, status, phase, keywords_run, skip_llm)
      VALUES (?, ?, 'running', 'search', ?, ?)",
     params = list(project_id, iso_now(),
-                  toJSON(keywords, auto_unbox = FALSE),
+                  jsonlite::toJSON(keywords, auto_unbox = FALSE),
                   as.integer(skip_llm))
   )
-  dbGetQuery(con, "SELECT last_insert_rowid() AS id")$id[1]
+  DBI::dbGetQuery(con, "SELECT last_insert_rowid() AS id")$id[1]
 }
 
 run_finish <- function(con, run_id, status = "success",
                        articles_new = 0, articles_matched = 0,
                        error_msg = NA) {
-  dbExecute(con,
+  DBI::dbExecute(con,
     "UPDATE runs SET finished_at = ?, status = ?,
                      articles_new = ?, articles_matched = ?, error_msg = ?
      WHERE id = ?",
@@ -317,6 +317,6 @@ run_finish <- function(con, run_id, status = "success",
 }
 
 run_phase <- function(con, run_id, phase) {
-  dbExecute(con, "UPDATE runs SET phase = ? WHERE id = ?",
+  DBI::dbExecute(con, "UPDATE runs SET phase = ? WHERE id = ?",
             params = list(phase, run_id))
 }

@@ -51,9 +51,9 @@ db_connect <- function(path = db_path_default()) {
   if (!dir.exists(dirname(path))) {
     dir.create(dirname(path), recursive = TRUE)
   }
-  con <- dbConnect(SQLite(), path)
-  dbExecute(con, "PRAGMA foreign_keys = ON;")
-  dbExecute(con, "PRAGMA journal_mode = WAL;")
+  con <- DBI::dbConnect(RSQLite::SQLite(), path)
+  DBI::dbExecute(con, "PRAGMA foreign_keys = ON;")
+  DBI::dbExecute(con, "PRAGMA journal_mode = WAL;")
   db_migrate(con)
   con
 }
@@ -64,13 +64,13 @@ db_connect <- function(path = db_path_default()) {
 #' @return `NULL` invisivelmente.
 #' @export
 db_close <- function(con) {
-  if (!is.null(con) && dbIsValid(con)) dbDisconnect(con)
+  if (!is.null(con) && DBI::dbIsValid(con)) DBI::dbDisconnect(con)
   invisible(NULL)
 }
 
 # Aplica migrations em ordem; idempotente.
 db_migrate <- function(con) {
-  has_version_tbl <- dbExistsTable(con, "schema_version")
+  has_version_tbl <- DBI::dbExistsTable(con, "schema_version")
 
   files <- list.files(migrations_dir(), pattern = "^\\d{4}_.*\\.sql$", full.names = TRUE)
   files <- sort(files)
@@ -78,7 +78,7 @@ db_migrate <- function(con) {
 
   applied <- integer(0)
   if (has_version_tbl) {
-    applied <- dbGetQuery(con, "SELECT version FROM schema_version")$version
+    applied <- DBI::dbGetQuery(con, "SELECT version FROM schema_version")$version
   }
 
   for (f in files) {
@@ -95,14 +95,14 @@ db_migrate <- function(con) {
     statements <- statements[nzchar(statements)]
     for (stmt in statements) {
       tryCatch(
-        dbExecute(con, stmt),
+        DBI::dbExecute(con, stmt),
         error = function(e) {
           stop("Falha na migration ", basename(f), ":\n  ", stmt, "\n  ", conditionMessage(e))
         }
       )
     }
 
-    dbExecute(con, "INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (?, ?)",
+    DBI::dbExecute(con, "INSERT OR IGNORE INTO schema_version (version, applied_at) VALUES (?, ?)",
               params = list(version, iso_now()))
     message("Migration aplicada: ", basename(f))
   }
@@ -125,14 +125,14 @@ make_slug <- function(s) {
 
 # Insere artigo se ainda não existe; retorna TRUE se inseriu, FALSE se já estava.
 db_upsert_article <- function(con, article) {
-  existing <- dbGetQuery(con,
+  existing <- DBI::dbGetQuery(con,
     "SELECT 1 FROM articles WHERE url_clean = ?",
     params = list(article$url_clean)
   )
   if (nrow(existing) > 0) {
     return(FALSE)
   }
-  dbExecute(con,
+  DBI::dbExecute(con,
     "INSERT INTO articles
       (url_clean, url, title, title_norm, date, date_raw, section, excerpt,
        full_text, era, fulltext_status, collected_at, fulltext_at)
@@ -158,7 +158,7 @@ db_upsert_article <- function(con, article) {
 
 # Atualiza fulltext de um artigo existente.
 db_update_fulltext <- function(con, url_clean, full_text, status = "collected", era = NA) {
-  dbExecute(con,
+  DBI::dbExecute(con,
     "UPDATE articles SET full_text = ?, fulltext_status = ?, era = COALESCE(?, era),
                          fulltext_at = ?
      WHERE url_clean = ?",
@@ -168,13 +168,13 @@ db_update_fulltext <- function(con, url_clean, full_text, status = "collected", 
 
 # Anexa um artigo a um projeto (N:N). Se já anexado, mescla matched_keywords.
 db_link_article_to_project <- function(con, project_id, url_clean, keyword) {
-  existing <- dbGetQuery(con,
+  existing <- DBI::dbGetQuery(con,
     "SELECT matched_keywords FROM project_articles
      WHERE project_id = ? AND url_clean = ?",
     params = list(project_id, url_clean)
   )
   if (nrow(existing) == 0) {
-    dbExecute(con,
+    DBI::dbExecute(con,
       "INSERT INTO project_articles (project_id, url_clean, matched_keywords, first_matched_at)
        VALUES (?, ?, ?, ?)",
       params = list(project_id, url_clean, keyword, iso_now())
@@ -184,7 +184,7 @@ db_link_article_to_project <- function(con, project_id, url_clean, keyword) {
   current_kws <- strsplit(existing$matched_keywords[1], "; ", fixed = TRUE)[[1]]
   if (keyword %in% current_kws) return("unchanged")
   merged <- paste(c(current_kws, keyword), collapse = "; ")
-  dbExecute(con,
+  DBI::dbExecute(con,
     "UPDATE project_articles SET matched_keywords = ?
      WHERE project_id = ? AND url_clean = ?",
     params = list(merged, project_id, url_clean)

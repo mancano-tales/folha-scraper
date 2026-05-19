@@ -54,7 +54,7 @@ project_corpus <- function(con, project_id) {
     WHERE pa.project_id = ?
     ORDER BY a.date DESC, a.title ASC
   "
-  dbGetQuery(con, q, params = list(project_id)) |> as_tibble()
+  DBI::dbGetQuery(con, q, params = list(project_id)) |> tibble::as_tibble()
 }
 
 # TODO v0.3 — porta de 04-export.R:

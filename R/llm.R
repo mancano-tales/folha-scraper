@@ -163,7 +163,7 @@ call_llm <- function(prompt, api_key = get_api_key()) {
       req_perform()
 
     raw    <- resp_body_json(resp)$choices[[1]]$message$content
-    parsed <- fromJSON(raw)
+    parsed <- jsonlite::fromJSON(raw)
 
     list(
       relevant      = as.character(parsed$relevante     %||% NA),
