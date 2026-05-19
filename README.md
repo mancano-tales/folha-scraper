@@ -24,9 +24,7 @@ Project { nome, descrição, datas, temas[], keywords[], few-shot[] }
 
 ---
 
-## Estado atual (v0.1)
-
-Funcional via CLI em R. Shiny app planejado para v0.2.
+## Estado atual (v0.2)
 
 | Capacidade | Status |
 |---|---|
@@ -34,18 +32,19 @@ Funcional via CLI em R. Shiny app planejado para v0.2.
 | Coleta de busca paginada | ✅ |
 | Coleta de fulltext (3 eras de layout da Folha) | ✅ |
 | Dedup por URL + fuzzy por título | ✅ |
-| Classificação LLM via DeepSeek (zero-shot e few-shot) | ✅ |
+| Classificação LLM via DeepSeek (zero-shot e few-shot) — biblioteca | ✅ |
 | Datas opcionais por keyword (sobrescrevem datas do projeto) | ✅ |
 | Importação do corpus da tese (legacy CSV → SQLite) | ✅ |
-| CLI mínima (create-project, add-keyword, run) | ✅ |
-| App Shiny | ⏳ planejado para v0.2 |
-| Exportação Excel multi-aba | ⏳ a portar |
+| CLI (create-project, add-keyword, run, refresh-fulltext) | ✅ |
+| **App Shiny (v0.2)** — projetos, keywords, coleta com log live, corpus browser | ✅ |
+| App Shiny — features LLM (anotação few-shot, classificar) | ⏳ v0.2.x |
+| Exportação Excel multi-aba | ⏳ v0.3 |
 
 ---
 
 ## Pré-requisitos
 
-R 4.2+ com os pacotes:
+R 4.2+ com os pacotes da biblioteca:
 
 ```r
 install.packages(c(
@@ -53,6 +52,12 @@ install.packages(c(
   "stringr", "stringdist", "stringi", "glue", "lubridate",
   "jsonlite", "readr", "tibble"
 ))
+```
+
+Para o Shiny app (adicional):
+
+```r
+install.packages(c("shiny", "bslib", "DT", "callr", "htmltools"))
 ```
 
 Chave da API DeepSeek em `~/.Renviron`:
@@ -109,6 +114,39 @@ db_close(db)
 
 ---
 
+## Uso (Shiny app)
+
+A partir da raiz do repositório:
+
+```r
+source("R/run_app.R")
+run_app()
+```
+
+ou via Rscript:
+
+```bash
+Rscript scripts/run_app.R              # abre no navegador padrão
+Rscript scripts/run_app.R --port 4321  # porta fixa
+Rscript scripts/run_app.R --no-browser # roda sem abrir
+```
+
+O app tem três abas:
+
+1. **Projetos** — DT com todos os projetos, botão *+ Novo projeto* abre modal com formulário (nome, datas, temas, descrição). Clique numa linha para abrir o projeto.
+
+2. **Projeto atual** — dividido em 4 sub-abas:
+   - *Visão geral*: cards de stats (keywords, artigos, % com fulltext) + histórico de rodadas
+   - *Keywords*: tabela editável; adicionar/remover keyword; datas opcionais sobrescrevem as do projeto
+   - *Coleta*: botão **▶ Rodar coleta** que dispara processo em background (via `callr`); log em tempo real, atualizado a cada segundo. A coleta inclui busca + dedup + fulltext (sem LLM nesta versão)
+   - *Corpus*: DT do corpus do projeto com filtros (era, status fulltext, período, busca textual); clique numa linha abre modal com fulltext
+
+3. **Sobre** — descrição, versão, link pro repositório
+
+> A coleta roda em processo separado. Você pode navegar para outras abas durante uma rodada — o log continua atualizando quando você volta.
+
+---
+
 ## Importando o corpus da dissertação
 
 Se você tem o `corpus_master.csv` da pasta da tese:
@@ -128,8 +166,9 @@ O script popula a tabela `articles` (todos os artigos viram parte do banco compa
 ```
 folha-scraper/
 ├── R/                          ← lógica (biblioteca)
+├── app/                        ← Shiny app (global.R + app.R)
 ├── inst/migrations/            ← SQL versionado
-├── scripts/                    ← entrypoints (CLI, importação)
+├── scripts/                    ← entrypoints (CLI, importação, run_app)
 ├── tests/                      ← testthat (placeholder)
 └── data/
     └── folha.sqlite            ← banco local (gitignored)
@@ -141,7 +180,8 @@ O banco é local. Backup é cópia do arquivo `data/folha.sqlite`.
 
 ## Roadmap
 
-- **v0.2** — Shiny app: lista de projetos, formulário de criação, monitor de rodada, browser de corpus, anotação few-shot no app
+- ~~**v0.2** — Shiny app: lista de projetos, formulário de criação, monitor de rodada, browser de corpus~~ ✅
+- **v0.2.1** — Anotação few-shot no app, exposição das features LLM, botão "classificar" por projeto
 - **v0.3** — Exportação Excel multi-aba por projeto
 - **v0.4** — Auditoria de classificação LLM no app
 - **futuro** — Múltiplas fontes (Estadão, Globo), provedores LLM alternativos (Claude, GPT), agendamento de coletas periódicas

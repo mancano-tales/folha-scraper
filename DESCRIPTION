@@ -26,5 +26,10 @@ Imports:
     readr,
     tibble
 Suggests:
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    shiny (>= 1.8.0),
+    bslib (>= 0.6.0),
+    DT (>= 0.30),
+    callr (>= 3.7.0),
+    htmltools
 RoxygenNote: 7.3.0

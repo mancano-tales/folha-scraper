@@ -28,8 +28,15 @@ A história e os bugs resolvidos na origem estão documentados em [`Mancano2026-
 
 **Camada de entrypoints** (`scripts/`):
 
-- `cli.R` — dispatcher para uso via `Rscript`
+- `cli.R` — dispatcher para uso via `Rscript` (new-project, add-keyword, run, refresh-fulltext, etc.)
 - `import_thesis_corpus.R` — migra CSV da tese → SQLite
+- `run_app.R` — lança o Shiny app
+
+**Camada de UI** (`app/`):
+
+- `global.R` — bootstrap; resolve `APP_ROOT`, sourcia `R/*.R`, abre conexão padrão do DB
+- `app.R` — UI + server num arquivo (~700 linhas, padrão educabr). 3 navs: Projetos, Projeto atual, Sobre. Sub-navs no projeto atual: Visão geral, Keywords, Coleta, Corpus
+- **v0.2 não expõe features LLM no app**: classificação e few-shot existem na biblioteca mas a UI usa `skip_llm = TRUE` por padrão. Plano em v0.2.x
 
 **Schema** em `inst/migrations/0001_init.sql`. Versões futuras: `0002_*.sql`, etc.
 
@@ -73,10 +80,18 @@ Seletores em cascata. Se a Folha redesenhar o site, rodar `inspect_search_page()
 
 ---
 
+## Padrões do Shiny app
+
+- **Conexões DB de curta duração.** Cada handler usa `db_op(\(con) ...)` que abre, executa e fecha. Evita locks longos no SQLite. Migrations são idempotentes (versionadas em `schema_version`), então re-abrir é barato.
+- **Refresh reativo via contadores.** `projects_refresh`, `keywords_refresh`, `corpus_refresh` são `reactiveVal(0L)` que incrementam após mutações. Reactives que dependem deles re-disparam.
+- **Coleta em background via `callr::r_bg()`.** Processo filho re-sourcia `R/*.R` e roda `run_collection()`. Stdout/stderr redirecionados para arquivo em `tempdir()`. UI lê com `reactivePoll(1000)` e renderiza num `<pre>` estilizado tipo terminal.
+- **Detecção de término.** `observe()` com `invalidateLater(1500)` checa `proc$is_alive()`. Quando vira FALSE, dispara um refresh global dos contadores e notifica o usuário (uma única vez via flag `run_finished_at`).
+- **Modais para forms.** Novo projeto, adicionar keyword, ver artigo: todos usam `showModal(modalDialog(...))`. Submit faz `removeModal()` no sucesso.
+
 ## O que NÃO está implementado
 
-- **Sem Shiny.** Tudo via R console ou `Rscript scripts/cli.R`.
-- **Sem exportação Excel ainda.** Função `export_excel(db, project_id)` existe como TODO em `R/export.R` (placeholder).
+- **Sem exportação Excel ainda.** Função `export_excel_project(db, id, file)` existe como stub em `R/export.R`. `project_corpus(con, id)` já retorna o tibble do corpus — falta só montar o workbook multi-aba.
+- **Sem features LLM no app.** Biblioteca tem zero-shot e few-shot via DeepSeek (`R/llm.R`), mas a UI v0.2 não expõe. Plano em v0.2.1.
 - **Sem auditoria LLM no app** (planejado para v0.4).
 - **Apenas DeepSeek.** Estrutura permite trocar provedor (`R/llm.R` tem `call_llm()` com provider arg), mas só DeepSeek implementado.
 - **Apenas Folha.** Outras fontes exigiriam novos parsers; arquitetura não generaliza sem refactor.
