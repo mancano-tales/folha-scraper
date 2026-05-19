@@ -12,6 +12,38 @@ suppressPackageStartupMessages({
 # -----------------------------------------------------------------------------
 # Projects
 # -----------------------------------------------------------------------------
+#' Cria um novo projeto de pesquisa
+#'
+#' Cada projeto representa uma pesquisa com keywords, datas e temas
+#' próprios. Artigos coletados são compartilhados entre projetos via
+#' tabela `articles` (URL-keyed), mas classificações LLM são por-projeto.
+#'
+#' @param con Conexão DBI aberta com [db_connect()].
+#' @param name Nome único do projeto (string).
+#' @param date_start Data inicial. Aceita `Date` ou string `YYYY-MM-DD`.
+#' @param date_end Data final. Mesmo formato.
+#' @param themes Vetor character de temas para classificação. Pode ficar
+#'   vazio nesta versão (LLM não exposto no app).
+#' @param description Descrição opcional (string). `NA` para omitir.
+#'
+#' @return Inteiro com o `id` do projeto recém-criado.
+#'
+#' @examples
+#' \dontrun{
+#' con <- db_connect()
+#' pid <- project_create(
+#'   con,
+#'   name = "Reforma do ProUni",
+#'   date_start = "2003-01-01",
+#'   date_end = "2016-12-31",
+#'   themes = c("ProUni", "FIES", "Cotas"),
+#'   description = "Mudanças na composição socioeconômica do ensino superior."
+#' )
+#' db_close(con)
+#' }
+#'
+#' @seealso [project_list()], [project_get()], [project_add_keyword()]
+#' @export
 project_create <- function(con, name, date_start, date_end,
                             themes = character(0),
                             description = NA_character_) {
@@ -36,6 +68,19 @@ project_create <- function(con, name, date_start, date_end,
   dbGetQuery(con, "SELECT last_insert_rowid() AS id")$id[1]
 }
 
+#' Lista todos os projetos no banco
+#'
+#' @param con Conexão DBI.
+#' @param include_archived Se `TRUE`, inclui projetos arquivados. Padrão `FALSE`.
+#'
+#' @return Tibble com colunas `id`, `name`, `slug`, `date_start`, `date_end`,
+#'   `status`, `created_at`, `n_keywords`, `n_articles`.
+#'
+#' @examples
+#' \dontrun{
+#' con <- db_connect(); project_list(con); db_close(con)
+#' }
+#' @export
 project_list <- function(con, include_archived = FALSE) {
   q <- "SELECT p.id, p.name, p.slug, p.date_start, p.date_end, p.status,
                p.created_at,
@@ -47,6 +92,15 @@ project_list <- function(con, include_archived = FALSE) {
   dbGetQuery(con, q) |> as_tibble()
 }
 
+#' Recupera um projeto por id ou nome
+#'
+#' @param con Conexão DBI.
+#' @param id_or_name Inteiro (id) ou string (name/slug do projeto).
+#'
+#' @return Lista com os campos do projeto, incluindo `themes` (vetor parseado
+#'   do JSON), ou `NULL` se não encontrado.
+#'
+#' @export
 project_get <- function(con, id_or_name) {
   if (is.numeric(id_or_name)) {
     res <- dbGetQuery(con, "SELECT * FROM projects WHERE id = ?", params = list(id_or_name))
@@ -60,6 +114,12 @@ project_get <- function(con, id_or_name) {
   out
 }
 
+#' Arquiva um projeto (não apaga, apenas marca como inativo)
+#'
+#' @param con Conexão DBI.
+#' @param project_id Inteiro com o id do projeto.
+#' @return `NULL` invisivelmente.
+#' @export
 project_archive <- function(con, project_id) {
   dbExecute(con, "UPDATE projects SET status = 'archived', updated_at = ? WHERE id = ?",
             params = list(iso_now(), project_id))
@@ -68,6 +128,29 @@ project_archive <- function(con, project_id) {
 # -----------------------------------------------------------------------------
 # Keywords
 # -----------------------------------------------------------------------------
+#' Adiciona uma keyword a um projeto
+#'
+#' Keywords são processadas incrementalmente — adicionar uma nova não
+#' reprocessa as antigas. Use aspas escapadas `\"...\"` para busca exata
+#' na Folha; múltiplas palavras sem aspas funcionam como AND implícito.
+#'
+#' @param con Conexão DBI.
+#' @param project_id Inteiro com o id do projeto.
+#' @param keyword String da keyword.
+#' @param date_start_override Data inicial específica desta keyword (opcional).
+#'   `NA` (padrão) usa a data do projeto. Aceita `Date` ou string.
+#' @param date_end_override Data final específica (opcional). Mesmo formato.
+#'
+#' @return String: `"inserted"` se nova, `"already_exists"` se já estava.
+#'
+#' @examples
+#' \dontrun{
+#' con <- db_connect()
+#' project_add_keyword(con, 1, "ProUni")
+#' project_add_keyword(con, 1, "Lei de Cotas", date_start_override = "2012-08-29")
+#' db_close(con)
+#' }
+#' @export
 project_add_keyword <- function(con, project_id, keyword,
                                  date_start_override = NA, date_end_override = NA) {
   ds <- if (is.na(date_start_override)) NA_character_ else as_iso_date_or_na(date_start_override)
@@ -92,6 +175,15 @@ project_add_keyword <- function(con, project_id, keyword,
   )
 }
 
+#' Lista as keywords de um projeto
+#'
+#' @param con Conexão DBI.
+#' @param project_id Inteiro com o id do projeto.
+#' @param status Opcional: filtra por status (`"pending"`, `"searching"`,
+#'   `"done"`, `"failed"`). `NULL` (padrão) retorna todas.
+#'
+#' @return Tibble com colunas da tabela `project_keywords`.
+#' @export
 project_keywords <- function(con, project_id, status = NULL) {
   q <- "SELECT * FROM project_keywords WHERE project_id = ?"
   params <- list(project_id)

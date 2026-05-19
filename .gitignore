@@ -8,11 +8,11 @@
 # Renviron (contém chaves de API)
 .Renviron
 
-# Dados locais (banco SQLite e exports)
-data/*.sqlite
-data/*.sqlite-journal
-data/*.sqlite-wal
-data/*.sqlite-shm
+# Dados locais (banco SQLite e exports) — qualquer profundidade
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 data/exports/
 data/raw/
 
@@ -26,3 +26,10 @@ Thumbs.db
 
 # Logs
 *.log
+.positai
+
+# Quarto
+/.quarto/
+/website/.quarto/
+/website/_freeze/
+/website/_site/

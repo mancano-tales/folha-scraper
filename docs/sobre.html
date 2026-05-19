@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Contexto, origem, escolhas de design e roadmap.">
+
+<title>Sobre – folha-scraper</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-d7bc499e3991bb191dafef194b218b79.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-9779c63a7e80801b0e7fff5281d4ee7c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">folha-scraper</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Início</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./comecar.html"> 
+<span class="menu-text">Começar</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./referencia.html"> 
+<span class="menu-text">Referência</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="./sobre.html" aria-current="page"> 
+<span class="menu-text">Sobre</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/mancano-tales/folha-scraper"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#origem" id="toc-origem" class="nav-link active" data-scroll-target="#origem">Origem</a></li>
+  <li><a href="#por-que-clone-and-run-e-não-um-pacote-r" id="toc-por-que-clone-and-run-e-não-um-pacote-r" class="nav-link" data-scroll-target="#por-que-clone-and-run-e-não-um-pacote-r">Por que clone-and-run, e não um pacote R?</a></li>
+  <li><a href="#escolhas-de-design" id="toc-escolhas-de-design" class="nav-link" data-scroll-target="#escolhas-de-design">Escolhas de design</a>
+  <ul class="collapse">
+  <li><a href="#url-como-identidade-do-artigo" id="toc-url-como-identidade-do-artigo" class="nav-link" data-scroll-target="#url-como-identidade-do-artigo">URL como identidade do artigo</a></li>
+  <li><a href="#coleta-compartilhada-classificação-por-projeto" id="toc-coleta-compartilhada-classificação-por-projeto" class="nav-link" data-scroll-target="#coleta-compartilhada-classificação-por-projeto">Coleta compartilhada × classificação por-projeto</a></li>
+  <li><a href="#parsers-html-versionados-por-era" id="toc-parsers-html-versionados-por-era" class="nav-link" data-scroll-target="#parsers-html-versionados-por-era">Parsers HTML versionados por era</a></li>
+  <li><a href="#persistência-via-dbirsqlite" id="toc-persistência-via-dbirsqlite" class="nav-link" data-scroll-target="#persistência-via-dbirsqlite">Persistência via DBI/RSQLite</a></li>
+  </ul></li>
+  <li><a href="#roadmap" id="toc-roadmap" class="nav-link" data-scroll-target="#roadmap">Roadmap</a></li>
+  <li><a href="#custo-operacional" id="toc-custo-operacional" class="nav-link" data-scroll-target="#custo-operacional">Custo operacional</a></li>
+  <li><a href="#licença" id="toc-licença" class="nav-link" data-scroll-target="#licença">Licença</a></li>
+  <li><a href="#citação" id="toc-citação" class="nav-link" data-scroll-target="#citação">Citação</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/mancano-tales/folha-scraper/edit/main/sobre.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/mancano-tales/folha-scraper/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Sobre</h1>
+</div>
+
+<div>
+  <div class="description">
+    Contexto, origem, escolhas de design e roadmap.
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="origem" class="level2">
+<h2 class="anchored" data-anchor-id="origem">Origem</h2>
+<p>O folha-scraper começou como um pipeline R de uso interno na dissertação de mestrado <a href="https://github.com/mancano-tales/Mancano2026-MA-Thesis"><em>Mancano2026-MA-Thesis</em></a>, em uma subpasta da tese (<code>4-DA-Code/2026-05_Folha_Scraper</code>). Conforme as keywords foram crescendo e a estrutura precisou suportar iteração rápida, ficou claro que o pipeline merecia se tornar uma ferramenta própria, genérica e reutilizável.</p>
+<p>Em maio de 2026, o código foi extraído num repositório próprio, com schema multi-projeto e um Shiny app. A versão da tese <strong>permanece congelada</strong> como artefato; este repositório é a versão genérica, voltada para uso continuado em pesquisa.</p>
+</section>
+<section id="por-que-clone-and-run-e-não-um-pacote-r" class="level2">
+<h2 class="anchored" data-anchor-id="por-que-clone-and-run-e-não-um-pacote-r">Por que clone-and-run, e não um pacote R?</h2>
+<p>Quem chega de fora pode estranhar — o repo tem cara de pacote (<code>R/</code> na raiz, <code>roxygen2</code>-style comments), mas explicitamente <strong>não é um pacote instalável</strong>.</p>
+<p>Três motivos por trás dessa escolha:</p>
+<ol type="1">
+<li><p><strong>Estado por usuário</strong> — cada instalação tem seu próprio banco SQLite com projetos, keywords e artigos. Um pacote <code>install.packages()</code> esconderia esse banco numa biblioteca compartilhada, confundindo o usuário. Clone-and-run deixa óbvio: o banco vive <strong>dentro do clone</strong>.</p></li>
+<li><p><strong>Velocidade de desenvolvimento</strong> — o tool ainda está em fase de iteração rápida. Pacote força ciclo <code>code → roxygenise → install → load</code>, que é caro a cada mudança. Clone-and-run só pede <code>source()</code>.</p></li>
+<li><p><strong>Composição com Quarto</strong> — a tese, o site e o tooling do autor são todos Quarto. Adicionar <code>pkgdown</code> introduziria uma segunda toolchain de documentação sem ganho real.</p></li>
+</ol>
+<p>Se um dia fizer sentido ser pacote (porque outros pesquisadores querem <code>library(folhascraper)</code> em scripts), a conversão é simples: re-criar <code>DESCRIPTION</code> + <code>NAMESPACE</code>, mover <code>migrations/</code> de volta para <code>inst/migrations/</code>, ajustar <code>db_path_default()</code> para usar <code>tools::R_user_dir()</code>.</p>
+</section>
+<section id="escolhas-de-design" class="level2">
+<h2 class="anchored" data-anchor-id="escolhas-de-design">Escolhas de design</h2>
+<section id="url-como-identidade-do-artigo" class="level3">
+<h3 class="anchored" data-anchor-id="url-como-identidade-do-artigo">URL como identidade do artigo</h3>
+<p>A tabela <code>articles</code> é URL-keyed (<code>url_clean</code> PK). Mesmo artigo coletado em projetos diferentes existe <strong>uma única vez</strong>. Esse design permite:</p>
+<ul>
+<li>Coleta de fulltext acontece uma vez por URL (compartilhada entre projetos)</li>
+<li>Re-rodar a mesma keyword em datas diferentes só atualiza, nunca duplica</li>
+<li>O custo computacional cresce só com o <strong>novo</strong> que aparece</li>
+</ul>
+</section>
+<section id="coleta-compartilhada-classificação-por-projeto" class="level3">
+<h3 class="anchored" data-anchor-id="coleta-compartilhada-classificação-por-projeto">Coleta compartilhada × classificação por-projeto</h3>
+<p><code>articles</code> e <code>project_articles</code> são N:N. Já <code>classifications</code> tem chave composta <code>(project_id, url_clean)</code> — mesmo artigo pode ser classificado como “relevante” no projeto A e “não relevante” no projeto B. Isso reflete o fato de que relevância editorial é <strong>teoria-dependente</strong>: uma notícia sobre “fraude no FIES” é central para um projeto sobre captura privada e periférica para outro sobre desigualdade de acesso.</p>
+</section>
+<section id="parsers-html-versionados-por-era" class="level3">
+<h3 class="anchored" data-anchor-id="parsers-html-versionados-por-era">Parsers HTML versionados por era</h3>
+<p>O site da Folha foi redesenhado várias vezes. O parser de fulltext cobre 3 “eras” em cascata:</p>
+<ul>
+<li><strong>Era 1 (1994–2003)</strong> — URLs <code>/fsp/YYYY/M/D/...</code>, layout em tabela arcaica, texto com <code>&lt;br&gt;</code>. Sem <code>&lt;time&gt;</code>; data extraída por regex da URL. Heurística: pega o <code>&lt;td&gt;</code> com maior bloco de texto e remove linhas de navegação (“Texto Anterior”, “Próximo Texto”, “Índice”).</li>
+<li><strong>Era 2 (2003–2015)</strong> — <code>div.article</code> com <code>&lt;p&gt;</code> ou texto solto. URLs estilo <code>fcDDMMYYYY.htm</code>.</li>
+<li><strong>Era 3 (2015+)</strong> — <code>div.c-news__body</code>, <code>&lt;time datetime="DD.mmm.YYYY às HHhMM"&gt;</code>.</li>
+</ul>
+<p>Se a Folha redesenhar o site novamente, rodar <code>inspect_search_page()</code> e <code>inspect_article_page()</code> em URLs de cada era para diagnosticar antes de assumir que está tudo bem.</p>
+</section>
+<section id="persistência-via-dbirsqlite" class="level3">
+<h3 class="anchored" data-anchor-id="persistência-via-dbirsqlite">Persistência via DBI/RSQLite</h3>
+<p>Versões anteriores usavam CSVs. Trocamos para SQLite porque texto longo com <code>\n</code> e aspas embutidas quebrava <code>read.csv</code>/<code>write.csv</code> silenciosamente, perdendo a coluna <code>full_text</code> ao recarregar. SQLite com WAL mode também permite leitura concorrente enquanto o processo de coleta (em <code>callr::r_bg()</code>) escreve.</p>
+</section>
+</section>
+<section id="roadmap" class="level2">
+<h2 class="anchored" data-anchor-id="roadmap">Roadmap</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Versão</th>
+<th>Conteúdo</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>v0.2</strong> ✅</td>
+<td>Shiny app: projetos, keywords, coleta com log live, corpus browser</td>
+</tr>
+<tr class="even">
+<td><strong>v0.2.x</strong></td>
+<td>Classificação LLM exposta no app · anotação few-shot interativa · botão “classificar” por projeto</td>
+</tr>
+<tr class="odd">
+<td><strong>v0.3</strong></td>
+<td>Exportação Excel multi-aba (corpus, keywords_mapa, stats_ano, rodadas, llm_relevancia)</td>
+</tr>
+<tr class="even">
+<td><strong>v0.4</strong></td>
+<td>Auditoria de classificações LLM no app · diagnóstico de falsos negativos</td>
+</tr>
+<tr class="odd">
+<td>Futuro</td>
+<td>Múltiplas fontes (Estadão, OESP, Globo) com parsers próprios · provedores LLM alternativos (Claude, GPT) · agendamento de coletas periódicas</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="custo-operacional" class="level2">
+<h2 class="anchored" data-anchor-id="custo-operacional">Custo operacional</h2>
+<p>A coleta em si é gratuita — só tempo (delays de 2–5s entre requests para respeito ao servidor). A classificação LLM via DeepSeek custa ~US$ 0,14 por milhão de tokens de input. Estimativa para 2.500 artigos únicos com few-shot ativo: ~US$ 0,25 por rodada de classificação.</p>
+</section>
+<section id="licença" class="level2">
+<h2 class="anchored" data-anchor-id="licença">Licença</h2>
+<p>Código sob licença MIT. Veja <a href="https://github.com/mancano-tales/folha-scraper/blob/main/LICENSE">LICENSE</a> se existir, ou trate todo o conteúdo como MIT mesmo enquanto o arquivo não está lá.</p>
+</section>
+<section id="citação" class="level2">
+<h2 class="anchored" data-anchor-id="citação">Citação</h2>
+<p>Se você usa este código em pesquisa publicada, por favor cite:</p>
+<blockquote class="blockquote">
+<p>Mançano, T. (2026). <em>folha-scraper: Multi-project Folha de São Paulo article collector</em> [Software]. <a href="https://github.com/mancano-tales/folha-scraper" class="uri">https://github.com/mancano-tales/folha-scraper</a></p>
+</blockquote>
+<p>Para citar a dissertação que originou o pipeline:</p>
+<blockquote class="blockquote">
+<p>Mançano, T. (2026). <em>[título da dissertação]</em> (Dissertação de Mestrado). <a href="https://github.com/mancano-tales/Mancano2026-MA-Thesis" class="uri">https://github.com/mancano-tales/Mancano2026-MA-Thesis</a></p>
+</blockquote>
+
+
+</section>
+
+<a onclick="window.scrollTo(0, 0); return false;" role="button" id="quarto-back-to-top"><i class="bi bi-arrow-up"></i> Back to top</a></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/mancano-tales\.github\.io\/folha-scraper\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+            // default icon
+            link.classList.add("external");
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Desenvolvido por <a href="https://github.com/mancano-tales">Tales Mançano</a>. Código sob licença MIT.</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/mancano-tales/folha-scraper/edit/main/sobre.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/mancano-tales/folha-scraper/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Origem: spinoff do pipeline da dissertação <em>Mancano2026-MA-Thesis</em>.</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

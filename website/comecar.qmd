@@ -1,0 +1,162 @@
+---
+title: "Começar: do zero ao primeiro corpus"
+description: "Tutorial passo-a-passo, do clone do repositório à primeira rodada de coleta. Foco no app Shiny."
+---
+
+Este guia te leva de zero ao primeiro corpus em ~10 minutos. O caminho recomendado é o **app Shiny**: você não precisa decorar comando nenhum, só apertar botões.
+
+## 1. Pré-requisitos
+
+Você precisa de:
+
+- **R 4.2+** instalado ([download](https://cran.r-project.org/))
+- **Git** instalado
+- (Opcional) **RStudio** ou outro IDE
+
+Não precisa instalar o folha-scraper como pacote — você vai **clonar e rodar**.
+
+## 2. Clonar o repositório
+
+```bash
+git clone https://github.com/mancano-tales/folha-scraper.git
+cd folha-scraper
+```
+
+Abra R nessa pasta. Se você usa RStudio, abra `folha-scraper.Rproj` — ele já seta o working directory.
+
+## 3. Instalar os pacotes R
+
+Na primeira vez, instale as dependências. Duas listas:
+
+**Pacotes da biblioteca** (obrigatórios para qualquer uso):
+
+```r
+install.packages(c(
+  "DBI", "RSQLite", "httr2", "rvest", "dplyr", "purrr", "tidyr",
+  "stringr", "stringdist", "stringi", "glue", "lubridate",
+  "jsonlite", "readr", "tibble"
+))
+```
+
+**Pacotes do Shiny app** (necessários para a interface gráfica):
+
+```r
+install.packages(c("shiny", "bslib", "DT", "callr", "htmltools"))
+```
+
+## 4. Lançar o app
+
+A partir da raiz do repositório:
+
+```r
+source("R/run_app.R")
+run_app()
+```
+
+O navegador abre automaticamente. Você vê três abas no topo:
+
+- **Projetos** — onde tudo começa
+- **Projeto atual** — visão do projeto que você está investigando
+- **Sobre** — versão, roadmap, links
+
+## 5. Criar seu primeiro projeto
+
+Na aba **Projetos**, clique **+ Novo projeto**. Preencha:
+
+::: {.callout-note appearance="simple"}
+**Nome** — Algo descritivo. Ex.: *"Reforma do ProUni"*.
+
+**Datas inicial e final** — Janela em que a Folha será buscada. Pode ser ampla (ex.: 2003–2020); você restringe depois por keyword se quiser.
+
+**Temas (um por linha)** — Rótulos analíticos do projeto. Serão usados pela classificação LLM em versões futuras; por enquanto, servem como documentação.
+
+```
+ProUni
+FIES
+Cotas / ação afirmativa
+Desigualdade de acesso
+```
+
+**Descrição** (opcional) — Uma ou duas frases sobre o que você investiga.
+:::
+
+Ao clicar **Criar projeto**, o app pula automaticamente para a aba **Projeto atual** com o seu projeto carregado.
+
+## 6. Adicionar keywords
+
+Na sub-aba **Keywords**, clique **+ Adicionar keyword**.
+
+**Boas práticas:**
+
+- Comece com termos específicos: nomes de programas, leis, atores. Exemplos: `ProUni`, `FIES`, `REUNI`, `Lei de Cotas`.
+- Use aspas escapadas para busca exata: `"financiamento estudantil"`.
+- Múltiplas palavras sem aspas funcionam como AND implícito: `FIES fraudes`.
+- **Datas opcionais por keyword** sobrescrevem as do projeto. Útil para termos que só fazem sentido em certas janelas. Ex.: `Lei de Cotas` só vale a partir de agosto/2012 — defina `Data inicial = 2012-08-29`.
+
+Você pode adicionar **uma agora e várias depois**. O pipeline detecta automaticamente o que ainda não foi processado.
+
+## 7. Rodar a coleta
+
+Vá para a sub-aba **Coleta** e clique **▶ Rodar coleta**.
+
+O que acontece em ordem:
+
+1. **Busca paginada** — o app abre `search.folha.uol.com.br` com cada keyword e coleta título + URL + trecho + data + seção de cada resultado.
+2. **Dedup** — artigos com a mesma URL viram uma linha só. Republicações com títulos quase idênticos (similaridade ≥ 0.92) são removidas.
+3. **Fulltext** — para cada artigo novo, o app baixa a página completa e extrai o texto. Cobre 3 layouts da Folha:
+   - **Era 3** (2010+): `div.c-news__body` com tags `<p>`
+   - **Era 2** (anos 2000): `div.article` com `<p>` ou texto solto
+   - **Era 1** (anos 90, `/fsp/*.htm`): layout em tabela arcaica com `<br>` — parser usa heurística do maior `<td>` e remove navegação
+
+O log aparece em **tempo real** no painel preto, atualizando a cada segundo.
+
+::: {.callout-tip}
+A coleta roda em **processo separado**. Você pode navegar para outras abas durante uma rodada — o log continua atualizando quando você voltar.
+:::
+
+::: {.callout-warning}
+A coleta tem delays de 2–5s entre requests para não sobrecarregar o servidor da Folha. Para 100 artigos, espere ~5 minutos.
+:::
+
+Apertar **■ Interromper** mata o processo limpo.
+
+## 8. Navegar o corpus
+
+Quando termina, a sub-aba **Corpus** mostra todos os artigos do projeto. Filtros:
+
+- **Era**: 1 / 2 / 3
+- **Fulltext**: `collected` / `paywall` / `pending` / `failed`
+- **Período**: range de datas
+- **Buscar**: texto livre em título + fulltext
+
+**Clique em qualquer linha** para abrir um modal com o texto completo, link externo para a Folha e metadados.
+
+## 9. Iterar: adicionar mais keywords
+
+A grande vantagem do design incremental: adicione keywords novas e rode de novo. O app:
+
+- Pula keywords com status `done`
+- Para keywords novas, **reaproveita automaticamente** qualquer artigo já no banco (mesma URL = mesmo artigo). Apenas URLs nunca vistas passam pela coleta de fulltext.
+
+Você pode começar com 3 keywords como experimento, ver o que aparece, refinar, adicionar 10 keywords, rodar de novo — e o custo de tempo cresce só com o **novo** que você encontrou.
+
+## 10. Múltiplos projetos
+
+Volte à aba **Projetos** e crie um segundo (ex.: *"Política de cotas"*). Adicione keywords. Rode.
+
+Se uma keyword do projeto B encontra um artigo do projeto A (mesma URL):
+
+- **Não é re-baixado** — fulltext é compartilhado
+- O link projeto-artigo é criado: o artigo agora pertence aos dois projetos
+- Versões futuras com LLM classificarão o mesmo artigo separadamente em cada projeto
+
+Esse é o coração do design multi-projeto: **a coleta cara é compartilhada, a interpretação é por projeto**.
+
+## Próximos passos
+
+- **Documentação das funções** — ver [Referência](referencia.qmd)
+- **Uso via CLI** sem o Shiny — ver `Rscript scripts/cli.R --help`
+- **Importar um corpus pré-existente** — ver [`scripts/import_thesis_corpus.R`](https://github.com/mancano-tales/folha-scraper/blob/main/scripts/import_thesis_corpus.R) no GitHub
+- **Features LLM** (classificação automática) — planejadas para v0.2.x. Por enquanto, a biblioteca `R/llm.R` tem o código mas o app não expõe
+
+Dúvidas, bugs, sugestões: <https://github.com/mancano-tales/folha-scraper/issues>.

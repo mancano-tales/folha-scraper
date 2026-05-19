@@ -1,0 +1,233 @@
+[
+  {
+    "objectID": "sobre.html",
+    "href": "sobre.html",
+    "title": "Sobre",
+    "section": "",
+    "text": "O folha-scraper começou como um pipeline R de uso interno na dissertação de mestrado Mancano2026-MA-Thesis, em uma subpasta da tese (4-DA-Code/2026-05_Folha_Scraper). Conforme as keywords foram crescendo e a estrutura precisou suportar iteração rápida, ficou claro que o pipeline merecia se tornar uma ferramenta própria, genérica e reutilizável.\nEm maio de 2026, o código foi extraído num repositório próprio, com schema multi-projeto e um Shiny app. A versão da tese permanece congelada como artefato; este repositório é a versão genérica, voltada para uso continuado em pesquisa."
+  },
+  {
+    "objectID": "sobre.html#origem",
+    "href": "sobre.html#origem",
+    "title": "Sobre",
+    "section": "",
+    "text": "O folha-scraper começou como um pipeline R de uso interno na dissertação de mestrado Mancano2026-MA-Thesis, em uma subpasta da tese (4-DA-Code/2026-05_Folha_Scraper). Conforme as keywords foram crescendo e a estrutura precisou suportar iteração rápida, ficou claro que o pipeline merecia se tornar uma ferramenta própria, genérica e reutilizável.\nEm maio de 2026, o código foi extraído num repositório próprio, com schema multi-projeto e um Shiny app. A versão da tese permanece congelada como artefato; este repositório é a versão genérica, voltada para uso continuado em pesquisa."
+  },
+  {
+    "objectID": "sobre.html#por-que-clone-and-run-e-não-um-pacote-r",
+    "href": "sobre.html#por-que-clone-and-run-e-não-um-pacote-r",
+    "title": "Sobre",
+    "section": "Por que clone-and-run, e não um pacote R?",
+    "text": "Por que clone-and-run, e não um pacote R?\nQuem chega de fora pode estranhar — o repo tem cara de pacote (R/ na raiz, roxygen2-style comments), mas explicitamente não é um pacote instalável.\nTrês motivos por trás dessa escolha:\n\nEstado por usuário — cada instalação tem seu próprio banco SQLite com projetos, keywords e artigos. Um pacote install.packages() esconderia esse banco numa biblioteca compartilhada, confundindo o usuário. Clone-and-run deixa óbvio: o banco vive dentro do clone.\nVelocidade de desenvolvimento — o tool ainda está em fase de iteração rápida. Pacote força ciclo code → roxygenise → install → load, que é caro a cada mudança. Clone-and-run só pede source().\nComposição com Quarto — a tese, o site e o tooling do autor são todos Quarto. Adicionar pkgdown introduziria uma segunda toolchain de documentação sem ganho real.\n\nSe um dia fizer sentido ser pacote (porque outros pesquisadores querem library(folhascraper) em scripts), a conversão é simples: re-criar DESCRIPTION + NAMESPACE, mover migrations/ de volta para inst/migrations/, ajustar db_path_default() para usar tools::R_user_dir()."
+  },
+  {
+    "objectID": "sobre.html#escolhas-de-design",
+    "href": "sobre.html#escolhas-de-design",
+    "title": "Sobre",
+    "section": "Escolhas de design",
+    "text": "Escolhas de design\n\nURL como identidade do artigo\nA tabela articles é URL-keyed (url_clean PK). Mesmo artigo coletado em projetos diferentes existe uma única vez. Esse design permite:\n\nColeta de fulltext acontece uma vez por URL (compartilhada entre projetos)\nRe-rodar a mesma keyword em datas diferentes só atualiza, nunca duplica\nO custo computacional cresce só com o novo que aparece\n\n\n\nColeta compartilhada × classificação por-projeto\narticles e project_articles são N:N. Já classifications tem chave composta (project_id, url_clean) — mesmo artigo pode ser classificado como “relevante” no projeto A e “não relevante” no projeto B. Isso reflete o fato de que relevância editorial é teoria-dependente: uma notícia sobre “fraude no FIES” é central para um projeto sobre captura privada e periférica para outro sobre desigualdade de acesso.\n\n\nParsers HTML versionados por era\nO site da Folha foi redesenhado várias vezes. O parser de fulltext cobre 3 “eras” em cascata:\n\nEra 1 (1994–2003) — URLs /fsp/YYYY/M/D/..., layout em tabela arcaica, texto com &lt;br&gt;. Sem &lt;time&gt;; data extraída por regex da URL. Heurística: pega o &lt;td&gt; com maior bloco de texto e remove linhas de navegação (“Texto Anterior”, “Próximo Texto”, “Índice”).\nEra 2 (2003–2015) — div.article com &lt;p&gt; ou texto solto. URLs estilo fcDDMMYYYY.htm.\nEra 3 (2015+) — div.c-news__body, &lt;time datetime=\"DD.mmm.YYYY às HHhMM\"&gt;.\n\nSe a Folha redesenhar o site novamente, rodar inspect_search_page() e inspect_article_page() em URLs de cada era para diagnosticar antes de assumir que está tudo bem.\n\n\nPersistência via DBI/RSQLite\nVersões anteriores usavam CSVs. Trocamos para SQLite porque texto longo com \\n e aspas embutidas quebrava read.csv/write.csv silenciosamente, perdendo a coluna full_text ao recarregar. SQLite com WAL mode também permite leitura concorrente enquanto o processo de coleta (em callr::r_bg()) escreve."
+  },
+  {
+    "objectID": "sobre.html#roadmap",
+    "href": "sobre.html#roadmap",
+    "title": "Sobre",
+    "section": "Roadmap",
+    "text": "Roadmap\n\n\n\n\n\n\n\nVersão\nConteúdo\n\n\n\n\nv0.2 ✅\nShiny app: projetos, keywords, coleta com log live, corpus browser\n\n\nv0.2.x\nClassificação LLM exposta no app · anotação few-shot interativa · botão “classificar” por projeto\n\n\nv0.3\nExportação Excel multi-aba (corpus, keywords_mapa, stats_ano, rodadas, llm_relevancia)\n\n\nv0.4\nAuditoria de classificações LLM no app · diagnóstico de falsos negativos\n\n\nFuturo\nMúltiplas fontes (Estadão, OESP, Globo) com parsers próprios · provedores LLM alternativos (Claude, GPT) · agendamento de coletas periódicas"
+  },
+  {
+    "objectID": "sobre.html#custo-operacional",
+    "href": "sobre.html#custo-operacional",
+    "title": "Sobre",
+    "section": "Custo operacional",
+    "text": "Custo operacional\nA coleta em si é gratuita — só tempo (delays de 2–5s entre requests para respeito ao servidor). A classificação LLM via DeepSeek custa ~US$ 0,14 por milhão de tokens de input. Estimativa para 2.500 artigos únicos com few-shot ativo: ~US$ 0,25 por rodada de classificação."
+  },
+  {
+    "objectID": "sobre.html#licença",
+    "href": "sobre.html#licença",
+    "title": "Sobre",
+    "section": "Licença",
+    "text": "Licença\nCódigo sob licença MIT. Veja LICENSE se existir, ou trate todo o conteúdo como MIT mesmo enquanto o arquivo não está lá."
+  },
+  {
+    "objectID": "sobre.html#citação",
+    "href": "sobre.html#citação",
+    "title": "Sobre",
+    "section": "Citação",
+    "text": "Citação\nSe você usa este código em pesquisa publicada, por favor cite:\n\nMançano, T. (2026). folha-scraper: Multi-project Folha de São Paulo article collector [Software]. https://github.com/mancano-tales/folha-scraper\n\nPara citar a dissertação que originou o pipeline:\n\nMançano, T. (2026). [título da dissertação] (Dissertação de Mestrado). https://github.com/mancano-tales/Mancano2026-MA-Thesis"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "folha-scraper",
+    "section": "",
+    "text": "Pipeline em R + SQLite + Shiny que coleta, deduplica e organiza notícias da Folha de São Paulo a partir de palavras-chave, suportando múltiplos projetos de pesquisa lado a lado que compartilham um único banco de artigos."
+  },
+  {
+    "objectID": "index.html#a-ideia-em-uma-figura",
+    "href": "index.html#a-ideia-em-uma-figura",
+    "title": "folha-scraper",
+    "section": "A ideia em uma figura",
+    "text": "A ideia em uma figura\nProject { nome, datas, keywords[], temas[] }\n                   │\n                   ▼\n       project_articles (N:N)\n                   │\n                   ▼\n     ┌─────────────────────────────┐\n     │  articles                   │   ← banco compartilhado entre projetos\n     │  (URL-keyed, fulltext       │      a coleta cara acontece UMA vez\n     │   coletado uma vez)         │      por URL\n     └─────────────────────────────┘\n                   │\n                   ▼\n       classifications (por-projeto)   ← versões futuras: LLM com\n                                          grade temática específica\n                                          por pesquisa\nA coleta de fulltext acontece uma vez por URL — se um segundo projeto busca uma palavra-chave que retorna um artigo já coletado, o texto é reutilizado sem custo. Apenas a classificação LLM (planejada para v0.2.x) é refeita por projeto, porque relevância e grade temática são teoria-dependentes."
+  },
+  {
+    "objectID": "index.html#capacidades-atuais-v0.2",
+    "href": "index.html#capacidades-atuais-v0.2",
+    "title": "folha-scraper",
+    "section": "Capacidades atuais (v0.2)",
+    "text": "Capacidades atuais (v0.2)\n\n\n\n\n\n\n\nBanco SQLite com schema multi-projeto\n✅\n\n\nBusca paginada na Folha (com delays de respeito ao servidor)\n✅\n\n\nColeta de fulltext cobrindo 3 eras de layout (1994–2003, 2003–2015, 2015+)\n✅\n\n\nDeduplicação por URL + fuzzy por título (Jaro-Winkler ≥ 0.92)\n✅\n\n\nDatas opcionais por keyword (sobrescrevem datas do projeto)\n✅\n\n\nImportação de corpus pré-existente (legacy CSV → SQLite)\n✅\n\n\nCLI (criar projeto, adicionar keyword, rodar, refresh-fulltext)\n✅\n\n\nApp Shiny com Projetos, Coleta com log live, Corpus browser\n✅\n\n\nClassificação LLM exposta no app\n⏳ v0.2.x\n\n\nExportação Excel multi-aba\n⏳ v0.3"
+  },
+  {
+    "objectID": "index.html#modelo-de-uso",
+    "href": "index.html#modelo-de-uso",
+    "title": "folha-scraper",
+    "section": "Modelo de uso",
+    "text": "Modelo de uso\nEste projeto não é um pacote R instalável. É um repositório clone-and-run: você clona, abre R nessa pasta, e roda o app. Cada clone tem seu próprio banco SQLite em data/folha.sqlite. Para detalhes, ver Começar."
+  },
+  {
+    "objectID": "index.html#links",
+    "href": "index.html#links",
+    "title": "folha-scraper",
+    "section": "Links",
+    "text": "Links\n\nCódigo no GitHub\nReportar bug\nDissertação original (Mancano2026-MA-Thesis)"
+  },
+  {
+    "objectID": "comecar.html",
+    "href": "comecar.html",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "",
+    "text": "Este guia te leva de zero ao primeiro corpus em ~10 minutos. O caminho recomendado é o app Shiny: você não precisa decorar comando nenhum, só apertar botões."
+  },
+  {
+    "objectID": "comecar.html#pré-requisitos",
+    "href": "comecar.html#pré-requisitos",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "1. Pré-requisitos",
+    "text": "1. Pré-requisitos\nVocê precisa de:\n\nR 4.2+ instalado (download)\nGit instalado\n(Opcional) RStudio ou outro IDE\n\nNão precisa instalar o folha-scraper como pacote — você vai clonar e rodar."
+  },
+  {
+    "objectID": "comecar.html#clonar-o-repositório",
+    "href": "comecar.html#clonar-o-repositório",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "2. Clonar o repositório",
+    "text": "2. Clonar o repositório\ngit clone https://github.com/mancano-tales/folha-scraper.git\ncd folha-scraper\nAbra R nessa pasta. Se você usa RStudio, abra folha-scraper.Rproj — ele já seta o working directory."
+  },
+  {
+    "objectID": "comecar.html#instalar-os-pacotes-r",
+    "href": "comecar.html#instalar-os-pacotes-r",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "3. Instalar os pacotes R",
+    "text": "3. Instalar os pacotes R\nNa primeira vez, instale as dependências. Duas listas:\nPacotes da biblioteca (obrigatórios para qualquer uso):\ninstall.packages(c(\n  \"DBI\", \"RSQLite\", \"httr2\", \"rvest\", \"dplyr\", \"purrr\", \"tidyr\",\n  \"stringr\", \"stringdist\", \"stringi\", \"glue\", \"lubridate\",\n  \"jsonlite\", \"readr\", \"tibble\"\n))\nPacotes do Shiny app (necessários para a interface gráfica):\ninstall.packages(c(\"shiny\", \"bslib\", \"DT\", \"callr\", \"htmltools\"))"
+  },
+  {
+    "objectID": "comecar.html#lançar-o-app",
+    "href": "comecar.html#lançar-o-app",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "4. Lançar o app",
+    "text": "4. Lançar o app\nA partir da raiz do repositório:\nsource(\"R/run_app.R\")\nrun_app()\nO navegador abre automaticamente. Você vê três abas no topo:\n\nProjetos — onde tudo começa\nProjeto atual — visão do projeto que você está investigando\nSobre — versão, roadmap, links"
+  },
+  {
+    "objectID": "comecar.html#criar-seu-primeiro-projeto",
+    "href": "comecar.html#criar-seu-primeiro-projeto",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "5. Criar seu primeiro projeto",
+    "text": "5. Criar seu primeiro projeto\nNa aba Projetos, clique + Novo projeto. Preencha:\n\n\n\n\n\n\nNome — Algo descritivo. Ex.: “Reforma do ProUni”.\nDatas inicial e final — Janela em que a Folha será buscada. Pode ser ampla (ex.: 2003–2020); você restringe depois por keyword se quiser.\nTemas (um por linha) — Rótulos analíticos do projeto. Serão usados pela classificação LLM em versões futuras; por enquanto, servem como documentação.\nProUni\nFIES\nCotas / ação afirmativa\nDesigualdade de acesso\nDescrição (opcional) — Uma ou duas frases sobre o que você investiga.\n\n\n\nAo clicar Criar projeto, o app pula automaticamente para a aba Projeto atual com o seu projeto carregado."
+  },
+  {
+    "objectID": "comecar.html#adicionar-keywords",
+    "href": "comecar.html#adicionar-keywords",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "6. Adicionar keywords",
+    "text": "6. Adicionar keywords\nNa sub-aba Keywords, clique + Adicionar keyword.\nBoas práticas:\n\nComece com termos específicos: nomes de programas, leis, atores. Exemplos: ProUni, FIES, REUNI, Lei de Cotas.\nUse aspas escapadas para busca exata: \"financiamento estudantil\".\nMúltiplas palavras sem aspas funcionam como AND implícito: FIES fraudes.\nDatas opcionais por keyword sobrescrevem as do projeto. Útil para termos que só fazem sentido em certas janelas. Ex.: Lei de Cotas só vale a partir de agosto/2012 — defina Data inicial = 2012-08-29.\n\nVocê pode adicionar uma agora e várias depois. O pipeline detecta automaticamente o que ainda não foi processado."
+  },
+  {
+    "objectID": "comecar.html#rodar-a-coleta",
+    "href": "comecar.html#rodar-a-coleta",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "7. Rodar a coleta",
+    "text": "7. Rodar a coleta\nVá para a sub-aba Coleta e clique ▶ Rodar coleta.\nO que acontece em ordem:\n\nBusca paginada — o app abre search.folha.uol.com.br com cada keyword e coleta título + URL + trecho + data + seção de cada resultado.\nDedup — artigos com a mesma URL viram uma linha só. Republicações com títulos quase idênticos (similaridade ≥ 0.92) são removidas.\nFulltext — para cada artigo novo, o app baixa a página completa e extrai o texto. Cobre 3 layouts da Folha:\n\nEra 3 (2010+): div.c-news__body com tags &lt;p&gt;\nEra 2 (anos 2000): div.article com &lt;p&gt; ou texto solto\nEra 1 (anos 90, /fsp/*.htm): layout em tabela arcaica com &lt;br&gt; — parser usa heurística do maior &lt;td&gt; e remove navegação\n\n\nO log aparece em tempo real no painel preto, atualizando a cada segundo.\n\n\n\n\n\n\nTip\n\n\n\nA coleta roda em processo separado. Você pode navegar para outras abas durante uma rodada — o log continua atualizando quando você voltar.\n\n\n\n\n\n\n\n\nWarning\n\n\n\nA coleta tem delays de 2–5s entre requests para não sobrecarregar o servidor da Folha. Para 100 artigos, espere ~5 minutos.\n\n\nApertar ■ Interromper mata o processo limpo."
+  },
+  {
+    "objectID": "comecar.html#navegar-o-corpus",
+    "href": "comecar.html#navegar-o-corpus",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "8. Navegar o corpus",
+    "text": "8. Navegar o corpus\nQuando termina, a sub-aba Corpus mostra todos os artigos do projeto. Filtros:\n\nEra: 1 / 2 / 3\nFulltext: collected / paywall / pending / failed\nPeríodo: range de datas\nBuscar: texto livre em título + fulltext\n\nClique em qualquer linha para abrir um modal com o texto completo, link externo para a Folha e metadados."
+  },
+  {
+    "objectID": "comecar.html#iterar-adicionar-mais-keywords",
+    "href": "comecar.html#iterar-adicionar-mais-keywords",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "9. Iterar: adicionar mais keywords",
+    "text": "9. Iterar: adicionar mais keywords\nA grande vantagem do design incremental: adicione keywords novas e rode de novo. O app:\n\nPula keywords com status done\nPara keywords novas, reaproveita automaticamente qualquer artigo já no banco (mesma URL = mesmo artigo). Apenas URLs nunca vistas passam pela coleta de fulltext.\n\nVocê pode começar com 3 keywords como experimento, ver o que aparece, refinar, adicionar 10 keywords, rodar de novo — e o custo de tempo cresce só com o novo que você encontrou."
+  },
+  {
+    "objectID": "comecar.html#múltiplos-projetos",
+    "href": "comecar.html#múltiplos-projetos",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "10. Múltiplos projetos",
+    "text": "10. Múltiplos projetos\nVolte à aba Projetos e crie um segundo (ex.: “Política de cotas”). Adicione keywords. Rode.\nSe uma keyword do projeto B encontra um artigo do projeto A (mesma URL):\n\nNão é re-baixado — fulltext é compartilhado\nO link projeto-artigo é criado: o artigo agora pertence aos dois projetos\nVersões futuras com LLM classificarão o mesmo artigo separadamente em cada projeto\n\nEsse é o coração do design multi-projeto: a coleta cara é compartilhada, a interpretação é por projeto."
+  },
+  {
+    "objectID": "comecar.html#próximos-passos",
+    "href": "comecar.html#próximos-passos",
+    "title": "Começar: do zero ao primeiro corpus",
+    "section": "Próximos passos",
+    "text": "Próximos passos\n\nDocumentação das funções — ver Referência\nUso via CLI sem o Shiny — ver Rscript scripts/cli.R --help\nImportar um corpus pré-existente — ver scripts/import_thesis_corpus.R no GitHub\nFeatures LLM (classificação automática) — planejadas para v0.2.x. Por enquanto, a biblioteca R/llm.R tem o código mas o app não expõe\n\nDúvidas, bugs, sugestões: https://github.com/mancano-tales/folha-scraper/issues."
+  },
+  {
+    "objectID": "referencia.html",
+    "href": "referencia.html",
+    "title": "Referência",
+    "section": "",
+    "text": "Esta página documenta as funções públicas dos módulos em R/. Se você usa o app Shiny, provavelmente não precisa chamar nenhuma delas diretamente — elas estão aqui para quem quer scriptar o pipeline ou compor com código próprio.\nPara usar qualquer função, primeiro carregue os módulos:"
+  },
+  {
+    "objectID": "referencia.html#app-shiny",
+    "href": "referencia.html#app-shiny",
+    "title": "Referência",
+    "section": "App Shiny",
+    "text": "App Shiny\n\nrun_app()\nLança a interface gráfica.\nsource(\"R/run_app.R\")\nrun_app(port = NULL, launch.browser = TRUE, ...)\nArgumentos:\n\nport — Porta TCP. NULL (padrão) escolhe porta aleatória disponível.\nlaunch.browser — Se TRUE (padrão), abre o navegador automaticamente.\n... — Passado para shiny::runApp() (ex.: host, quiet)."
+  },
+  {
+    "objectID": "referencia.html#banco-de-dados",
+    "href": "referencia.html#banco-de-dados",
+    "title": "Referência",
+    "section": "Banco de dados",
+    "text": "Banco de dados\n\ndb_connect()\nAbre uma conexão SQLite. Aplica migrations pendentes automaticamente. Idempotente.\ncon &lt;- db_connect(path = db_path_default())\nArgumentos:\n\npath — Caminho para o arquivo SQLite. Padrão: data/folha.sqlite na raiz do repo, ou Sys.getenv(\"FOLHA_SCRAPER_DB\") se definido.\n\nRetorna: Objeto SQLiteConnection (DBI).\n\n\ndb_close()\ndb_close(con)\nFecha a conexão. Sempre use on.exit(db_close(con)) para garantir fechamento."
+  },
+  {
+    "objectID": "referencia.html#projetos",
+    "href": "referencia.html#projetos",
+    "title": "Referência",
+    "section": "Projetos",
+    "text": "Projetos\n\nproject_create()\nCria um novo projeto de pesquisa.\npid &lt;- project_create(con, name, date_start, date_end,\n                      themes = character(0),\n                      description = NA_character_)\nArgumentos:\n\ncon — Conexão DBI aberta com db_connect().\nname — Nome único do projeto.\ndate_start, date_end — Datas (objeto Date ou string YYYY-MM-DD).\nthemes — Vetor character de temas. Pode ser vazio.\ndescription — String opcional.\n\nRetorna: Inteiro com o id do projeto.\nExemplo:\ncon &lt;- db_connect()\npid &lt;- project_create(\n  con,\n  name = \"Reforma do ProUni\",\n  date_start = \"2003-01-01\",\n  date_end = \"2016-12-31\",\n  themes = c(\"ProUni\", \"FIES\", \"Cotas\"),\n  description = \"Mudanças na composição socioeconômica do ensino superior.\"\n)\ndb_close(con)\n\n\nproject_list()\nproject_list(con, include_archived = FALSE)\nRetorna tibble com todos os projetos. Colunas: id, name, slug, date_start, date_end, status, created_at, n_keywords, n_articles.\n\n\nproject_get()\nproject_get(con, id_or_name)\nid_or_name pode ser inteiro (id) ou string (nome/slug). Retorna lista com os campos do projeto, ou NULL se não encontrado.\n\n\nproject_archive()\nproject_archive(con, project_id)\nMarca o projeto como inativo (não apaga). Projetos arquivados saem dos listings padrão."
+  },
+  {
+    "objectID": "referencia.html#keywords",
+    "href": "referencia.html#keywords",
+    "title": "Referência",
+    "section": "Keywords",
+    "text": "Keywords\n\nproject_add_keyword()\nproject_add_keyword(con, project_id, keyword,\n                    date_start_override = NA, date_end_override = NA)\nArgumentos:\n\nkeyword — String. Use aspas escapadas para busca exata: \"financiamento estudantil\".\ndate_start_override, date_end_override — Datas opcionais que sobrescrevem as do projeto.\n\nRetorna: String. \"inserted\" se nova, \"already_exists\" se já estava.\n\n\nproject_keywords()\nproject_keywords(con, project_id, status = NULL)\nTibble com as keywords do projeto. status opcional filtra: \"pending\", \"searching\", \"done\", \"failed\"."
+  },
+  {
+    "objectID": "referencia.html#coleta-pipeline-principal",
+    "href": "referencia.html#coleta-pipeline-principal",
+    "title": "Referência",
+    "section": "Coleta (pipeline principal)",
+    "text": "Coleta (pipeline principal)\n\nrun_collection()\nRoda a coleta completa para um projeto. Processa todas as keywords com status pending.\nrun_collection(con, project_id, skip_llm = FALSE, n_few_shot = 8,\n               reprocess = FALSE)\nArgumentos:\n\nskip_llm — Se TRUE, pula a classificação LLM (recomendado para v0.2; LLM não exposto no app ainda).\nn_few_shot — Número de exemplos few-shot a injetar (ignorado se skip_llm = TRUE). 0 força zero-shot.\nreprocess — Se TRUE, reprocessa keywords com status done.\n\nCada keyword passa pelas fases: busca paginada → dedup → fulltext → (opcional) LLM. Salva tudo no banco via transações idempotentes — interrupções podem ser retomadas chamando a função de novo.\nRetorna: Lista invisível com contagens (raw, new, matched).\nExemplo:\ncon &lt;- db_connect()\nrun_collection(con, project_id = 1, skip_llm = TRUE)\ndb_close(con)"
+  },
+  {
+    "objectID": "referencia.html#inspeção-de-dados",
+    "href": "referencia.html#inspeção-de-dados",
+    "title": "Referência",
+    "section": "Inspeção de dados",
+    "text": "Inspeção de dados\n\nproject_corpus()\ncorpus &lt;- project_corpus(con, project_id)\nTibble com uma linha por artigo do projeto, ordenado por data desc. Colunas: url_clean, title, date, section, excerpt, full_text, era, fulltext_status, matched_keywords, e (se classificado) llm_relevant, llm_themes, llm_summary."
+  },
+  {
+    "objectID": "referencia.html#outras-funções-úteis-não-cobertas-em-detalhe-aqui",
+    "href": "referencia.html#outras-funções-úteis-não-cobertas-em-detalhe-aqui",
+    "title": "Referência",
+    "section": "Outras funções úteis (não cobertas em detalhe aqui)",
+    "text": "Outras funções úteis (não cobertas em detalhe aqui)\n\n\n\n\n\n\n\n\nFunção\nOnde está\nO que faz\n\n\n\n\ninspect_search_page()\nR/scrape.R\nDebug: inspeciona a página de resultados da Folha para uma keyword\n\n\ninspect_article_page()\nR/scrape.R\nDebug: inspeciona uma URL específica e mostra o texto extraído\n\n\nsearch_keyword()\nR/scrape.R\nBusca paginada para uma keyword (retorna tibble bruto, sem dedup)\n\n\nfetch_fulltext()\nR/scrape.R\nColeta fulltext de uma URL individual\n\n\ndedup_fuzzy()\nR/dedup.R\nDedup por similaridade de título contra um vetor de títulos existentes\n\n\nfew_shot_list(), few_shot_add()\nR/projects.R\nCRUD de exemplos few-shot por projeto (UI no app v0.2.x)\n\n\n\nPara ler o código-fonte com comentários completos, ver o diretório R/ no GitHub."
+  }
+]

@@ -38,7 +38,26 @@ A história e os bugs resolvidos na origem estão documentados em [`Mancano2026-
 - `app.R` — UI + server num arquivo (~700 linhas, padrão educabr). 3 navs: Projetos, Projeto atual, Sobre. Sub-navs no projeto atual: Visão geral, Keywords, Coleta, Corpus
 - **v0.2 não expõe features LLM no app**: classificação e few-shot existem na biblioteca mas a UI usa `skip_llm = TRUE` por padrão. Plano em v0.2.x
 
-**Schema** em `inst/migrations/0001_init.sql`. Versões futuras: `0002_*.sql`, etc.
+**Schema** em `migrations/0001_init.sql`. Versões futuras: `0002_*.sql`, etc.
+
+**Camada de documentação** (`website/` + `docs/`):
+
+- `website/_quarto.yml` — config do site Quarto: navbar, tema (`cosmo` + SCSS custom em `#1a3a5c`), footer, formato HTML
+- `website/index.qmd`, `comecar.qmd`, `referencia.qmd`, `sobre.qmd` — 4 páginas
+- `docs/` — output do `quarto render` (commitado, servido via GitHub Pages a partir de `/docs` na branch main)
+- Rebuild: `cd website && quarto render`
+
+---
+
+## NÃO é um pacote R
+
+Apesar do layout (`R/` na raiz, comentários estilo roxygen), este repositório **não é um pacote R instalável**. Não tem `DESCRIPTION`, `NAMESPACE`, `man/` nem `inst/`. Modelo de uso é **clone-and-run**:
+
+- Usuário clona o repo, abre R na raiz, roda `source("R/run_app.R"); run_app()`
+- Banco SQLite vive em `data/folha.sqlite` **dentro do clone** (não em `tools::R_user_dir`)
+- Comentários `#'` em `R/*.R` são docstrings inline para IDEs (RStudio mostra na completion); **não geram `man/`**
+
+Por que essa escolha: ver `website/sobre.qmd` seção "Por que clone-and-run". Resumo: estado é por-usuário (cada clone tem seu banco), iteração rápida importa, e o autor já vive em Quarto. Se um dia precisar virar pacote (alguém querer `library(folhascraper)` em script próprio), a conversão é simples — re-criar `DESCRIPTION`/`NAMESPACE`, mover `migrations/` para `inst/migrations/`, ajustar `db_path_default()` para `tools::R_user_dir()`.
 
 ---
 
@@ -101,6 +120,8 @@ Seletores em cascata. Se a Folha redesenhar o site, rodar `inspect_search_page()
 ## Ao trabalhar aqui
 
 - Manter as invariantes (seção acima).
-- Schema novo? Criar `inst/migrations/000N_descrição.sql` e atualizar `db_migrate()`. Nunca editar migrations antigas em produção.
+- Schema novo? Criar `migrations/000N_descrição.sql`. `db_migrate()` aplica em ordem automaticamente. Nunca editar migrations antigas em produção.
 - Antes de mexer em parsers, validar com `inspect_*` em URLs de cada era.
 - Testes vão para `tests/testthat/` (placeholder por enquanto; bom alvo: snapshot HTML por era).
+- Mexeu na documentação? Rodar `cd website && quarto render` para regenerar `docs/`, commitar `docs/` junto. Não rodamos GH Action ainda — é build local + commit.
+- **Não recriar `DESCRIPTION` / `NAMESPACE` / `inst/`** sem discussão explícita com o usuário. A decisão de não ser pacote foi tomada conscientemente (ver `website/sobre.qmd`).

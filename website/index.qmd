@@ -1,0 +1,62 @@
+---
+title: "folha-scraper"
+subtitle: "Coletor multi-projeto de notícias da Folha de São Paulo para pesquisa acadêmica"
+toc: false
+---
+
+Pipeline em R + SQLite + Shiny que coleta, deduplica e organiza notícias da Folha de São Paulo a partir de palavras-chave, suportando **múltiplos projetos de pesquisa lado a lado** que compartilham um único banco de artigos.
+
+> **Origem.** Spinoff do pipeline desenvolvido para a dissertação de mestrado [*Mancano2026-MA-Thesis*](https://github.com/mancano-tales/Mancano2026-MA-Thesis). A versão da tese permanece congelada como artefato; este repositório é a versão genérica.
+
+::: {.callout-tip}
+## Onde começar
+Pule direto para a [página **Começar**](comecar.qmd) — leva você do clone do repo à primeira rodada de coleta em ~10 minutos. Não precisa decorar comando nenhum: o app Shiny é a interface principal.
+:::
+
+## A ideia em uma figura
+
+```
+Project { nome, datas, keywords[], temas[] }
+                   │
+                   ▼
+       project_articles (N:N)
+                   │
+                   ▼
+     ┌─────────────────────────────┐
+     │  articles                   │   ← banco compartilhado entre projetos
+     │  (URL-keyed, fulltext       │      a coleta cara acontece UMA vez
+     │   coletado uma vez)         │      por URL
+     └─────────────────────────────┘
+                   │
+                   ▼
+       classifications (por-projeto)   ← versões futuras: LLM com
+                                          grade temática específica
+                                          por pesquisa
+```
+
+A coleta de fulltext acontece **uma vez** por URL — se um segundo projeto busca uma palavra-chave que retorna um artigo já coletado, o texto é reutilizado sem custo. Apenas a classificação LLM (planejada para v0.2.x) é refeita por projeto, porque relevância e grade temática são teoria-dependentes.
+
+## Capacidades atuais (v0.2)
+
+| | |
+|---|---|
+| Banco SQLite com schema multi-projeto | ✅ |
+| Busca paginada na Folha (com delays de respeito ao servidor) | ✅ |
+| Coleta de fulltext cobrindo 3 eras de layout (1994–2003, 2003–2015, 2015+) | ✅ |
+| Deduplicação por URL + fuzzy por título (Jaro-Winkler ≥ 0.92) | ✅ |
+| Datas opcionais por keyword (sobrescrevem datas do projeto) | ✅ |
+| Importação de corpus pré-existente (legacy CSV → SQLite) | ✅ |
+| CLI (criar projeto, adicionar keyword, rodar, refresh-fulltext) | ✅ |
+| **App Shiny** com Projetos, Coleta com log live, Corpus browser | ✅ |
+| Classificação LLM exposta no app | ⏳ v0.2.x |
+| Exportação Excel multi-aba | ⏳ v0.3 |
+
+## Modelo de uso
+
+Este projeto **não é um pacote R instalável**. É um repositório clone-and-run: você clona, abre R nessa pasta, e roda o app. Cada clone tem seu próprio banco SQLite em `data/folha.sqlite`. Para detalhes, ver [Começar](comecar.qmd).
+
+## Links
+
+- [Código no GitHub](https://github.com/mancano-tales/folha-scraper)
+- [Reportar bug](https://github.com/mancano-tales/folha-scraper/issues)
+- [Dissertação original (Mancano2026-MA-Thesis)](https://github.com/mancano-tales/Mancano2026-MA-Thesis)

@@ -1,0 +1,207 @@
+---
+title: "Referência"
+description: "Documentação das funções principais expostas pela biblioteca."
+---
+
+Esta página documenta as funções públicas dos módulos em `R/`. Se você usa o app Shiny, provavelmente não precisa chamar nenhuma delas diretamente — elas estão aqui para quem quer **scriptar** o pipeline ou compor com código próprio.
+
+Para usar qualquer função, primeiro carregue os módulos:
+
+```r
+for (f in c("db.R", "utils.R", "scrape.R", "dedup.R",
+            "projects.R", "llm.R", "pipeline.R", "export.R")) {
+  source(file.path("R", f))
+}
+```
+
+---
+
+## App Shiny
+
+### `run_app()` { #run-app }
+
+Lança a interface gráfica.
+
+```r
+source("R/run_app.R")
+run_app(port = NULL, launch.browser = TRUE, ...)
+```
+
+**Argumentos:**
+
+- `port` — Porta TCP. `NULL` (padrão) escolhe porta aleatória disponível.
+- `launch.browser` — Se `TRUE` (padrão), abre o navegador automaticamente.
+- `...` — Passado para `shiny::runApp()` (ex.: `host`, `quiet`).
+
+---
+
+## Banco de dados
+
+### `db_connect()`
+
+Abre uma conexão SQLite. Aplica migrations pendentes automaticamente. Idempotente.
+
+```r
+con <- db_connect(path = db_path_default())
+```
+
+**Argumentos:**
+
+- `path` — Caminho para o arquivo SQLite. Padrão: `data/folha.sqlite` na raiz do repo, ou `Sys.getenv("FOLHA_SCRAPER_DB")` se definido.
+
+**Retorna:** Objeto `SQLiteConnection` (DBI).
+
+### `db_close()`
+
+```r
+db_close(con)
+```
+
+Fecha a conexão. Sempre use `on.exit(db_close(con))` para garantir fechamento.
+
+---
+
+## Projetos
+
+### `project_create()`
+
+Cria um novo projeto de pesquisa.
+
+```r
+pid <- project_create(con, name, date_start, date_end,
+                      themes = character(0),
+                      description = NA_character_)
+```
+
+**Argumentos:**
+
+- `con` — Conexão DBI aberta com `db_connect()`.
+- `name` — Nome único do projeto.
+- `date_start`, `date_end` — Datas (objeto `Date` ou string `YYYY-MM-DD`).
+- `themes` — Vetor `character` de temas. Pode ser vazio.
+- `description` — String opcional.
+
+**Retorna:** Inteiro com o `id` do projeto.
+
+**Exemplo:**
+
+```r
+con <- db_connect()
+pid <- project_create(
+  con,
+  name = "Reforma do ProUni",
+  date_start = "2003-01-01",
+  date_end = "2016-12-31",
+  themes = c("ProUni", "FIES", "Cotas"),
+  description = "Mudanças na composição socioeconômica do ensino superior."
+)
+db_close(con)
+```
+
+### `project_list()`
+
+```r
+project_list(con, include_archived = FALSE)
+```
+
+Retorna tibble com todos os projetos. Colunas: `id`, `name`, `slug`, `date_start`, `date_end`, `status`, `created_at`, `n_keywords`, `n_articles`.
+
+### `project_get()`
+
+```r
+project_get(con, id_or_name)
+```
+
+`id_or_name` pode ser inteiro (id) ou string (nome/slug). Retorna lista com os campos do projeto, ou `NULL` se não encontrado.
+
+### `project_archive()`
+
+```r
+project_archive(con, project_id)
+```
+
+Marca o projeto como inativo (não apaga). Projetos arquivados saem dos listings padrão.
+
+---
+
+## Keywords
+
+### `project_add_keyword()`
+
+```r
+project_add_keyword(con, project_id, keyword,
+                    date_start_override = NA, date_end_override = NA)
+```
+
+**Argumentos:**
+
+- `keyword` — String. Use aspas escapadas para busca exata: `"financiamento estudantil"`.
+- `date_start_override`, `date_end_override` — Datas opcionais que sobrescrevem as do projeto.
+
+**Retorna:** String. `"inserted"` se nova, `"already_exists"` se já estava.
+
+### `project_keywords()`
+
+```r
+project_keywords(con, project_id, status = NULL)
+```
+
+Tibble com as keywords do projeto. `status` opcional filtra: `"pending"`, `"searching"`, `"done"`, `"failed"`.
+
+---
+
+## Coleta (pipeline principal)
+
+### `run_collection()`
+
+Roda a coleta completa para um projeto. Processa todas as keywords com status `pending`.
+
+```r
+run_collection(con, project_id, skip_llm = FALSE, n_few_shot = 8,
+               reprocess = FALSE)
+```
+
+**Argumentos:**
+
+- `skip_llm` — Se `TRUE`, pula a classificação LLM (recomendado para v0.2; LLM não exposto no app ainda).
+- `n_few_shot` — Número de exemplos few-shot a injetar (ignorado se `skip_llm = TRUE`). `0` força zero-shot.
+- `reprocess` — Se `TRUE`, reprocessa keywords com status `done`.
+
+Cada keyword passa pelas fases: **busca paginada → dedup → fulltext → (opcional) LLM**. Salva tudo no banco via transações idempotentes — interrupções podem ser retomadas chamando a função de novo.
+
+**Retorna:** Lista invisível com contagens (`raw`, `new`, `matched`).
+
+**Exemplo:**
+
+```r
+con <- db_connect()
+run_collection(con, project_id = 1, skip_llm = TRUE)
+db_close(con)
+```
+
+---
+
+## Inspeção de dados
+
+### `project_corpus()`
+
+```r
+corpus <- project_corpus(con, project_id)
+```
+
+Tibble com uma linha por artigo do projeto, ordenado por data desc. Colunas: `url_clean`, `title`, `date`, `section`, `excerpt`, `full_text`, `era`, `fulltext_status`, `matched_keywords`, e (se classificado) `llm_relevant`, `llm_themes`, `llm_summary`.
+
+---
+
+## Outras funções úteis (não cobertas em detalhe aqui)
+
+| Função | Onde está | O que faz |
+|---|---|---|
+| `inspect_search_page()` | `R/scrape.R` | Debug: inspeciona a página de resultados da Folha para uma keyword |
+| `inspect_article_page()` | `R/scrape.R` | Debug: inspeciona uma URL específica e mostra o texto extraído |
+| `search_keyword()` | `R/scrape.R` | Busca paginada para uma keyword (retorna tibble bruto, sem dedup) |
+| `fetch_fulltext()` | `R/scrape.R` | Coleta fulltext de uma URL individual |
+| `dedup_fuzzy()` | `R/dedup.R` | Dedup por similaridade de título contra um vetor de títulos existentes |
+| `few_shot_list()`, `few_shot_add()` | `R/projects.R` | CRUD de exemplos few-shot por projeto (UI no app v0.2.x) |
+
+Para ler o código-fonte com comentários completos, ver o [diretório R/ no GitHub](https://github.com/mancano-tales/folha-scraper/tree/main/R).

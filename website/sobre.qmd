@@ -1,0 +1,80 @@
+---
+title: "Sobre"
+description: "Contexto, origem, escolhas de design e roadmap."
+---
+
+## Origem
+
+O folha-scraper começou como um pipeline R de uso interno na dissertação de mestrado [*Mancano2026-MA-Thesis*](https://github.com/mancano-tales/Mancano2026-MA-Thesis), em uma subpasta da tese (`4-DA-Code/2026-05_Folha_Scraper`). Conforme as keywords foram crescendo e a estrutura precisou suportar iteração rápida, ficou claro que o pipeline merecia se tornar uma ferramenta própria, genérica e reutilizável.
+
+Em maio de 2026, o código foi extraído num repositório próprio, com schema multi-projeto e um Shiny app. A versão da tese **permanece congelada** como artefato; este repositório é a versão genérica, voltada para uso continuado em pesquisa.
+
+## Por que clone-and-run, e não um pacote R?
+
+Quem chega de fora pode estranhar — o repo tem cara de pacote (`R/` na raiz, `roxygen2`-style comments), mas explicitamente **não é um pacote instalável**.
+
+Três motivos por trás dessa escolha:
+
+1. **Estado por usuário** — cada instalação tem seu próprio banco SQLite com projetos, keywords e artigos. Um pacote `install.packages()` esconderia esse banco numa biblioteca compartilhada, confundindo o usuário. Clone-and-run deixa óbvio: o banco vive **dentro do clone**.
+
+2. **Velocidade de desenvolvimento** — o tool ainda está em fase de iteração rápida. Pacote força ciclo `code → roxygenise → install → load`, que é caro a cada mudança. Clone-and-run só pede `source()`.
+
+3. **Composição com Quarto** — a tese, o site e o tooling do autor são todos Quarto. Adicionar `pkgdown` introduziria uma segunda toolchain de documentação sem ganho real.
+
+Se um dia fizer sentido ser pacote (porque outros pesquisadores querem `library(folhascraper)` em scripts), a conversão é simples: re-criar `DESCRIPTION` + `NAMESPACE`, mover `migrations/` de volta para `inst/migrations/`, ajustar `db_path_default()` para usar `tools::R_user_dir()`.
+
+## Escolhas de design
+
+### URL como identidade do artigo
+
+A tabela `articles` é URL-keyed (`url_clean` PK). Mesmo artigo coletado em projetos diferentes existe **uma única vez**. Esse design permite:
+
+- Coleta de fulltext acontece uma vez por URL (compartilhada entre projetos)
+- Re-rodar a mesma keyword em datas diferentes só atualiza, nunca duplica
+- O custo computacional cresce só com o **novo** que aparece
+
+### Coleta compartilhada × classificação por-projeto
+
+`articles` e `project_articles` são N:N. Já `classifications` tem chave composta `(project_id, url_clean)` — mesmo artigo pode ser classificado como "relevante" no projeto A e "não relevante" no projeto B. Isso reflete o fato de que relevância editorial é **teoria-dependente**: uma notícia sobre "fraude no FIES" é central para um projeto sobre captura privada e periférica para outro sobre desigualdade de acesso.
+
+### Parsers HTML versionados por era
+
+O site da Folha foi redesenhado várias vezes. O parser de fulltext cobre 3 "eras" em cascata:
+
+- **Era 1 (1994–2003)** — URLs `/fsp/YYYY/M/D/...`, layout em tabela arcaica, texto com `<br>`. Sem `<time>`; data extraída por regex da URL. Heurística: pega o `<td>` com maior bloco de texto e remove linhas de navegação ("Texto Anterior", "Próximo Texto", "Índice").
+- **Era 2 (2003–2015)** — `div.article` com `<p>` ou texto solto. URLs estilo `fcDDMMYYYY.htm`.
+- **Era 3 (2015+)** — `div.c-news__body`, `<time datetime="DD.mmm.YYYY às HHhMM">`.
+
+Se a Folha redesenhar o site novamente, rodar `inspect_search_page()` e `inspect_article_page()` em URLs de cada era para diagnosticar antes de assumir que está tudo bem.
+
+### Persistência via DBI/RSQLite
+
+Versões anteriores usavam CSVs. Trocamos para SQLite porque texto longo com `\n` e aspas embutidas quebrava `read.csv`/`write.csv` silenciosamente, perdendo a coluna `full_text` ao recarregar. SQLite com WAL mode também permite leitura concorrente enquanto o processo de coleta (em `callr::r_bg()`) escreve.
+
+## Roadmap
+
+| Versão | Conteúdo |
+|---|---|
+| **v0.2** ✅ | Shiny app: projetos, keywords, coleta com log live, corpus browser |
+| **v0.2.x** | Classificação LLM exposta no app · anotação few-shot interativa · botão "classificar" por projeto |
+| **v0.3** | Exportação Excel multi-aba (corpus, keywords_mapa, stats_ano, rodadas, llm_relevancia) |
+| **v0.4** | Auditoria de classificações LLM no app · diagnóstico de falsos negativos |
+| Futuro | Múltiplas fontes (Estadão, OESP, Globo) com parsers próprios · provedores LLM alternativos (Claude, GPT) · agendamento de coletas periódicas |
+
+## Custo operacional
+
+A coleta em si é gratuita — só tempo (delays de 2–5s entre requests para respeito ao servidor). A classificação LLM via DeepSeek custa ~US$ 0,14 por milhão de tokens de input. Estimativa para 2.500 artigos únicos com few-shot ativo: ~US$ 0,25 por rodada de classificação.
+
+## Licença
+
+Código sob licença MIT. Veja [LICENSE](https://github.com/mancano-tales/folha-scraper/blob/main/LICENSE) se existir, ou trate todo o conteúdo como MIT mesmo enquanto o arquivo não está lá.
+
+## Citação
+
+Se você usa este código em pesquisa publicada, por favor cite:
+
+> Mançano, T. (2026). *folha-scraper: Multi-project Folha de São Paulo article collector* [Software]. <https://github.com/mancano-tales/folha-scraper>
+
+Para citar a dissertação que originou o pipeline:
+
+> Mançano, T. (2026). *[título da dissertação]* (Dissertação de Mestrado). <https://github.com/mancano-tales/Mancano2026-MA-Thesis>

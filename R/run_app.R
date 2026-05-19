@@ -2,16 +2,30 @@
 # run_app.R — lança o Shiny app a partir da raiz do repositório
 # =============================================================================
 
-# Lança o Folha Scraper Shiny app.
-#
-# Args:
-#   port           Porta TCP (NULL = porta aleatória disponível)
-#   launch.browser TRUE para abrir no navegador automaticamente
-#   ...            Passado para shiny::runApp()
-#
-# Uso (a partir da raiz do repo):
-#   source("R/run_app.R")
-#   run_app()
+#' Lança o Shiny app do Folha Scraper
+#'
+#' Abre a interface gráfica local com 3 abas: Projetos, Projeto atual,
+#' e Sobre. A coleta roda em processo separado via [callr::r_bg()] e o
+#' log aparece em tempo real na aba Coleta.
+#'
+#' @param port Porta TCP. `NULL` (padrão) escolhe uma porta aleatória
+#'   disponível.
+#' @param launch.browser Se `TRUE` (padrão), abre o app no navegador
+#'   padrão do sistema.
+#' @param ... Argumentos adicionais passados para [shiny::runApp()]
+#'   (ex.: `host`, `quiet`).
+#'
+#' @return Invocada por efeito colateral. Retorna o valor de
+#'   [shiny::runApp()] invisivelmente.
+#'
+#' @examples
+#' \dontrun{
+#' source("R/run_app.R")
+#' run_app()
+#' run_app(port = 4321, launch.browser = FALSE)
+#' }
+#'
+#' @export
 run_app <- function(port = NULL, launch.browser = TRUE, ...) {
   if (!requireNamespace("shiny", quietly = TRUE)) {
     stop("Pacote 'shiny' não instalado. Rode: install.packages('shiny')")

@@ -1,81 +1,109 @@
-# Folha Scraper
+# folha-scraper
 
-Coletor sistemático e classificador automático de notícias da Folha de São Paulo para pesquisa acadêmica. Suporta múltiplos projetos de pesquisa lado a lado, compartilhando um banco de artigos coletados.
+Coletor multi-projeto de notícias da Folha de São Paulo para pesquisa acadêmica. Pipeline R + SQLite + Shiny: você clona, abre, e roda.
 
-> **Origem.** Spinoff do pipeline desenvolvido para a dissertação `Mancano2026-MA-Thesis` (subpasta `4-DA-Code/2026-05_Folha_Scraper`). A versão da tese permanece congelada como artefato; este repositório é a versão genérica, multi-projeto, voltada para uso continuado em pesquisa.
+📖 **Documentação completa: <https://mancano-tales.github.io/folha-scraper/>**
+
+> **Origem.** Spinoff do pipeline desenvolvido para a dissertação `Mancano2026-MA-Thesis`. A versão da tese permanece congelada como artefato; este repositório é a versão genérica, multi-projeto, voltada para uso continuado em pesquisa.
 
 ---
 
-## Conceito
+## Modelo de uso: clone-and-run
 
-Cada pesquisa é um **projeto**:
+Este repositório **não é um pacote R instalável**. É um aplicativo: você clona o repo, instala dependências R uma vez, e roda. Cada clone tem seu próprio banco SQLite local em `data/folha.sqlite`. Esse modelo facilita iteração rápida e deixa óbvio onde os dados vivem.
 
+> Justificativa completa dessa escolha está em [Sobre → Por que clone-and-run](https://mancano-tales.github.io/folha-scraper/sobre.html#por-que-clone-and-run-e-não-um-pacote-r).
+
+---
+
+## Quick start
+
+```bash
+git clone https://github.com/mancano-tales/folha-scraper.git
+cd folha-scraper
 ```
-Project { nome, descrição, datas, temas[], keywords[], few-shot[] }
-                   │
-                   ▼
-            artigos (URL-keyed, compartilhados entre projetos)
-                   │
-                   ▼
-            classificações (por-projeto, porque relevância é teoria-dependente)
-```
 
-**A coleta de fulltext acontece uma vez por URL.** Se o projeto B busca uma keyword que retorna um artigo já coletado pelo projeto A, o texto é reutilizado sem custo. Apenas a classificação LLM é refeita para projeto B (porque os critérios de relevância e a grade temática são específicos).
-
----
-
-## Estado atual (v0.2)
-
-| Capacidade | Status |
-|---|---|
-| Banco SQLite com schema multi-projeto | ✅ |
-| Coleta de busca paginada | ✅ |
-| Coleta de fulltext (3 eras de layout da Folha) | ✅ |
-| Dedup por URL + fuzzy por título | ✅ |
-| Classificação LLM via DeepSeek (zero-shot e few-shot) — biblioteca | ✅ |
-| Datas opcionais por keyword (sobrescrevem datas do projeto) | ✅ |
-| Importação do corpus da tese (legacy CSV → SQLite) | ✅ |
-| CLI (create-project, add-keyword, run, refresh-fulltext) | ✅ |
-| **App Shiny (v0.2)** — projetos, keywords, coleta com log live, corpus browser | ✅ |
-| App Shiny — features LLM (anotação few-shot, classificar) | ⏳ v0.2.x |
-| Exportação Excel multi-aba | ⏳ v0.3 |
-
----
-
-## Pré-requisitos
-
-R 4.2+ com os pacotes da biblioteca:
+Em R (na raiz do repo):
 
 ```r
+# Dependências da biblioteca (instalar uma vez)
 install.packages(c(
   "DBI", "RSQLite", "httr2", "rvest", "dplyr", "purrr", "tidyr",
   "stringr", "stringdist", "stringi", "glue", "lubridate",
   "jsonlite", "readr", "tibble"
 ))
-```
 
-Para o Shiny app (adicional):
-
-```r
+# Dependências do Shiny app (instalar uma vez)
 install.packages(c("shiny", "bslib", "DT", "callr", "htmltools"))
+
+# Lança o app
+source("R/run_app.R")
+run_app()
 ```
 
-Chave da API DeepSeek em `~/.Renviron`:
-
-```
-DEEPSEEK_API_KEY=sk-...
-```
-
-Veja [`.Renviron.example`](.Renviron.example).
+Para um passo-a-passo guiado do clone à primeira coleta, ver [Começar](https://mancano-tales.github.io/folha-scraper/comecar.html).
 
 ---
 
-## Uso (CLI)
+## Capacidades (v0.2)
 
-A partir da raiz do repositório:
+| | |
+|---|---|
+| Banco SQLite com schema multi-projeto | ✅ |
+| Busca paginada na Folha (com delays de respeito ao servidor) | ✅ |
+| Coleta de fulltext cobrindo 3 eras de layout (1994–2003, 2003–2015, 2015+) | ✅ |
+| Deduplicação por URL + fuzzy por título | ✅ |
+| Datas opcionais por keyword | ✅ |
+| Importação de corpus CSV pré-existente | ✅ |
+| CLI (criar projeto, adicionar keyword, rodar, refresh-fulltext) | ✅ |
+| **App Shiny** com Projetos, Coleta com log live, Corpus browser | ✅ |
+| Classificação LLM via DeepSeek — biblioteca | ✅ |
+| Classificação LLM exposta no app | ⏳ v0.2.x |
+| Exportação Excel multi-aba | ⏳ v0.3 |
 
-```r
-# Criar um projeto
+---
+
+## Estrutura do repositório
+
+```
+folha-scraper/
+├── R/                    ← módulos R (biblioteca)
+│   ├── db.R              ← conexão SQLite + migrations
+│   ├── utils.R           ← logging, HTTP, parsing de datas
+│   ├── scrape.R          ← busca + fulltext (3 eras)
+│   ├── dedup.R           ← fuzzy dedup
+│   ├── projects.R        ← CRUD de projetos/keywords
+│   ├── llm.R             ← classificação DeepSeek (não exposta no app v0.2)
+│   ├── pipeline.R        ← orquestrador (run_collection)
+│   ├── export.R          ← project_corpus + stub p/ Excel
+│   └── run_app.R         ← lança o Shiny
+├── app/
+│   ├── global.R          ← bootstrap do Shiny
+│   └── app.R             ← UI + server (~700 linhas)
+├── scripts/
+│   ├── cli.R             ← CLI via Rscript
+│   ├── run_app.R         ← launcher do app
+│   └── import_thesis_corpus.R
+├── migrations/           ← SQL versionado
+│   └── 0001_init.sql
+├── website/              ← fonte do site Quarto
+│   ├── _quarto.yml
+│   ├── index.qmd
+│   ├── comecar.qmd
+│   ├── referencia.qmd
+│   └── sobre.qmd
+├── docs/                 ← site Quarto renderizado (servido via GH Pages)
+└── data/folha.sqlite     ← banco local (gitignored)
+```
+
+---
+
+## Uso via CLI
+
+Alternativa sem o app, para automação ou pipelines:
+
+```bash
+# Criar projeto
 Rscript scripts/cli.R new-project \
   --name "Reforma do ProUni" \
   --start 2003-01-01 --end 2016-12-31 \
@@ -84,107 +112,42 @@ Rscript scripts/cli.R new-project \
 # Adicionar keywords
 Rscript scripts/cli.R add-keyword --project "Reforma do ProUni" --keyword "ProUni"
 Rscript scripts/cli.R add-keyword --project "Reforma do ProUni" \
-  --keyword "Lei de Cotas" --start 2010-01-01
+  --keyword "Lei de Cotas" --start 2012-08-29
 
-# Listar projetos
+# Listar / inspecionar
 Rscript scripts/cli.R list-projects
+Rscript scripts/cli.R show-project --project "Reforma do ProUni"
 
-# Rodar coleta (busca + fulltext + dedup)
+# Rodar coleta
 Rscript scripts/cli.R run --project "Reforma do ProUni" --skip-llm
 
-# Coleta + classificação LLM
-Rscript scripts/cli.R run --project "Reforma do ProUni"
-```
-
-Ou interativamente no R:
-
-```r
-source("R/db.R"); source("R/utils.R"); source("R/scrape.R")
-source("R/dedup.R"); source("R/projects.R"); source("R/llm.R")
-source("R/pipeline.R")
-
-db <- db_connect()
-project_id <- project_create(db, name = "Teste",
-                              date_start = "01/01/2010", date_end = "31/12/2015",
-                              themes = c("ProUni", "FIES"))
-project_add_keyword(db, project_id, "ProUni")
-run_collection(db, project_id, skip_llm = TRUE)
-db_close(db)
+# Reaproveitar fulltext caso o parser melhore depois
+Rscript scripts/cli.R refresh-fulltext --project "Reforma do ProUni" --status "paywall"
 ```
 
 ---
 
-## Uso (Shiny app)
+## Importando um corpus pré-existente
 
-A partir da raiz do repositório:
-
-```r
-source("R/run_app.R")
-run_app()
-```
-
-ou via Rscript:
+Se você tem um `corpus_master.csv` (ex.: da pasta da tese):
 
 ```bash
-Rscript scripts/run_app.R              # abre no navegador padrão
-Rscript scripts/run_app.R --port 4321  # porta fixa
-Rscript scripts/run_app.R --no-browser # roda sem abrir
-```
-
-O app tem três abas:
-
-1. **Projetos** — DT com todos os projetos, botão *+ Novo projeto* abre modal com formulário (nome, datas, temas, descrição). Clique numa linha para abrir o projeto.
-
-2. **Projeto atual** — dividido em 4 sub-abas:
-   - *Visão geral*: cards de stats (keywords, artigos, % com fulltext) + histórico de rodadas
-   - *Keywords*: tabela editável; adicionar/remover keyword; datas opcionais sobrescrevem as do projeto
-   - *Coleta*: botão **▶ Rodar coleta** que dispara processo em background (via `callr`); log em tempo real, atualizado a cada segundo. A coleta inclui busca + dedup + fulltext (sem LLM nesta versão)
-   - *Corpus*: DT do corpus do projeto com filtros (era, status fulltext, período, busca textual); clique numa linha abre modal com fulltext
-
-3. **Sobre** — descrição, versão, link pro repositório
-
-> A coleta roda em processo separado. Você pode navegar para outras abas durante uma rodada — o log continua atualizando quando você volta.
-
----
-
-## Importando o corpus da dissertação
-
-Se você tem o `corpus_master.csv` da pasta da tese:
-
-```r
 Rscript scripts/import_thesis_corpus.R \
-  --csv "C:/Users/Mancano/Documents/MancanoSync/Mancano2026-MA-Thesis/4-DA-Code/2026-05_Folha_Scraper/data/master/corpus_master.csv" \
+  --csv "/caminho/para/corpus_master.csv" \
   --project-name "Mancano2026-MA-Thesis"
 ```
 
-O script popula a tabela `articles` (todos os artigos viram parte do banco compartilhado) e cria um projeto com as keywords e classificações já existentes.
-
----
-
-## Localização dos dados
-
-```
-folha-scraper/
-├── R/                          ← lógica (biblioteca)
-├── app/                        ← Shiny app (global.R + app.R)
-├── inst/migrations/            ← SQL versionado
-├── scripts/                    ← entrypoints (CLI, importação, run_app)
-├── tests/                      ← testthat (placeholder)
-└── data/
-    └── folha.sqlite            ← banco local (gitignored)
-```
-
-O banco é local. Backup é cópia do arquivo `data/folha.sqlite`.
+O script popula a tabela `articles` e cria um projeto com as keywords e classificações já existentes.
 
 ---
 
 ## Roadmap
 
-- ~~**v0.2** — Shiny app: lista de projetos, formulário de criação, monitor de rodada, browser de corpus~~ ✅
-- **v0.2.1** — Anotação few-shot no app, exposição das features LLM, botão "classificar" por projeto
-- **v0.3** — Exportação Excel multi-aba por projeto
-- **v0.4** — Auditoria de classificação LLM no app
-- **futuro** — Múltiplas fontes (Estadão, Globo), provedores LLM alternativos (Claude, GPT), agendamento de coletas periódicas
+- **v0.2** ✅ — Shiny app, projetos, coleta, corpus browser
+- **v0.2.x** — LLM exposto no app, anotação few-shot interativa
+- **v0.3** — Exportação Excel multi-aba
+- **v0.4** — Auditoria de classificações LLM
+- **Futuro** — Múltiplas fontes (Estadão, Globo), provedores LLM alternativos, agendamento
 
 ---
 

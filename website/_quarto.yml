@@ -1,0 +1,63 @@
+project:
+  type: website
+  output-dir: ../docs
+  render:
+    - "*.qmd"
+
+website:
+  title: "folha-scraper"
+  description: "Coletor multi-projeto de notícias da Folha de São Paulo para pesquisa acadêmica."
+  site-url: https://mancano-tales.github.io/folha-scraper/
+  repo-url: https://github.com/mancano-tales/folha-scraper
+  repo-actions: [edit, issue]
+  page-navigation: true
+  back-to-top-navigation: true
+
+  navbar:
+    background: "#1a3a5c"
+    foreground: light
+    pinned: true
+    search: true
+    left:
+      - href: index.qmd
+        text: Início
+      - href: comecar.qmd
+        text: Começar
+      - href: referencia.qmd
+        text: Referência
+      - href: sobre.qmd
+        text: Sobre
+    right:
+      - icon: github
+        href: https://github.com/mancano-tales/folha-scraper
+        aria-label: GitHub
+
+  page-footer:
+    background: light
+    border: true
+    left: |
+      Desenvolvido por [Tales Mançano](https://github.com/mancano-tales).
+      Código sob licença MIT.
+    right: |
+      Origem: spinoff do pipeline da dissertação
+      *Mancano2026-MA-Thesis*.
+
+format:
+  html:
+    theme:
+      light: [cosmo, custom.scss]
+    toc: true
+    toc-depth: 3
+    code-overflow: wrap
+    code-copy: true
+    code-tools: false
+    code-block-bg: "#f6f8fa"
+    code-block-border-left: "#1a3a5c"
+    link-external-icon: true
+    link-external-newwindow: true
+    smooth-scroll: true
+    fontsize: 1rem
+    grid:
+      sidebar-width: 280px
+      body-width: 760px
+      margin-width: 240px

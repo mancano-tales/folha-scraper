@@ -16,17 +16,37 @@ db_path_default <- function() {
   file.path(here_data, "folha.sqlite")
 }
 
-# Localiza o diretório de migrations. Em uso direto (não-instalado), olha em
-# `inst/migrations/`; instalado como pacote, em `system.file("migrations", ...)`.
+# Localiza o diretório de migrations. O repo é clone-and-run: as migrations
+# vivem em `migrations/` na raiz.
 migrations_dir <- function() {
-  inst_path <- file.path(getwd(), "inst", "migrations")
-  if (dir.exists(inst_path)) return(inst_path)
-  pkg_path <- tryCatch(system.file("migrations", package = "folhascraper"),
-                       error = function(e) "")
-  if (nzchar(pkg_path) && dir.exists(pkg_path)) return(pkg_path)
-  stop("Diretório de migrations não encontrado.")
+  p <- file.path(getwd(), "migrations")
+  if (dir.exists(p)) return(p)
+  stop("Diretório de migrations não encontrado em ", p,
+       " — rode a partir da raiz do repositório.")
 }
 
+#' Abre uma conexão SQLite com o banco de dados do folha-scraper
+#'
+#' Conecta ao banco em `path`, ativa foreign keys e WAL mode, e aplica
+#' migrations pendentes automaticamente. Idempotente — pode ser chamada
+#' múltiplas vezes sem problemas.
+#'
+#' @param path Caminho para o arquivo SQLite. Padrão: `data/folha.sqlite`
+#'   na raiz do repositório, ou o valor de `Sys.getenv("FOLHA_SCRAPER_DB")`
+#'   se definido.
+#'
+#' @return Objeto `SQLiteConnection` (DBI).
+#'
+#' @seealso [db_close()] para fechar a conexão depois.
+#'
+#' @examples
+#' \dontrun{
+#' con <- db_connect()
+#' DBI::dbListTables(con)
+#' db_close(con)
+#' }
+#'
+#' @export
 db_connect <- function(path = db_path_default()) {
   if (!dir.exists(dirname(path))) {
     dir.create(dirname(path), recursive = TRUE)
@@ -38,6 +58,11 @@ db_connect <- function(path = db_path_default()) {
   con
 }
 
+#' Fecha uma conexão SQLite
+#'
+#' @param con Conexão retornada por [db_connect()].
+#' @return `NULL` invisivelmente.
+#' @export
 db_close <- function(con) {
   if (!is.null(con) && dbIsValid(con)) dbDisconnect(con)
   invisible(NULL)

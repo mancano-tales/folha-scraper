@@ -159,6 +159,35 @@ process_keyword <- function(con, project, keyword_row, skip_llm = FALSE,
 # -----------------------------------------------------------------------------
 # Roda coleta completa para o projeto: processa todas as keywords 'pending'.
 # -----------------------------------------------------------------------------
+#' Roda a coleta completa para um projeto
+#'
+#' Processa todas as keywords com status `pending` do projeto. Cada
+#' keyword passa pelas fases: busca paginada → dedup → coleta de
+#' fulltext → (opcional) classificação LLM. Salva tudo no banco via
+#' transações idempotentes — interrupções podem ser retomadas rodando
+#' a função novamente.
+#'
+#' @param con Conexão DBI aberta com [db_connect()].
+#' @param project_id Inteiro com o id do projeto.
+#' @param skip_llm Se `TRUE` (recomendado para v0.2), pula a classificação
+#'   LLM. A coleta de busca + fulltext sempre roda.
+#' @param n_few_shot Número de exemplos few-shot a injetar na classificação
+#'   LLM (ignorado se `skip_llm = TRUE`). `0` força modo zero-shot.
+#' @param reprocess Se `TRUE`, reprocessa keywords com status `done`.
+#'   Padrão `FALSE` (processa só `pending`).
+#'
+#' @return Lista invisível com contagens (`raw`, `new`, `matched`).
+#'
+#' @examples
+#' \dontrun{
+#' con <- db_connect()
+#' run_collection(con, project_id = 1, skip_llm = TRUE)
+#' db_close(con)
+#' }
+#'
+#' @seealso [project_add_keyword()] para adicionar keywords antes,
+#'   [project_corpus()] para inspecionar o resultado.
+#' @export
 run_collection <- function(con, project_id, skip_llm = FALSE, n_few_shot = 8,
                             reprocess = FALSE) {
   project <- project_get(con, project_id)

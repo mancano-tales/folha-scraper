@@ -15,6 +15,27 @@ suppressPackageStartupMessages({
 })
 
 # Retorna corpus do projeto: artigos + classificações + matched_keywords.
+#' Retorna o corpus de um projeto como tibble
+#'
+#' Junta `articles` + `project_articles` + `classifications` para
+#' devolver tudo o que o projeto coletou, ordenado por data desc.
+#'
+#' @param con Conexão DBI.
+#' @param project_id Inteiro com o id do projeto.
+#'
+#' @return Tibble com uma linha por artigo do projeto. Colunas incluem
+#'   `url_clean`, `title`, `date`, `section`, `excerpt`, `full_text`,
+#'   `era`, `fulltext_status`, `matched_keywords`, e (quando há
+#'   classificação) `llm_relevant`, `llm_themes`, `llm_summary`.
+#'
+#' @examples
+#' \dontrun{
+#' con <- db_connect()
+#' corpus <- project_corpus(con, 1)
+#' nrow(corpus)
+#' db_close(con)
+#' }
+#' @export
 project_corpus <- function(con, project_id) {
   q <- "
     SELECT a.url_clean, a.url, a.title, a.date, a.section, a.excerpt,
