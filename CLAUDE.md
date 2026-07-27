@@ -1,5 +1,6 @@
-﻿# **Regra sobre Hard Links**: Agentes de IA **NÃO devem perder tempo** testando, auditando ou recriando hard links manualmente (mklink). O script de auto-cura automatizado (alidate-governance.R / setup) cuida disso sozinho. Foque estritamente no objetivo principal da tarefa.
+﻿  - **Hard Link Rule**: AI Agents **MUST NOT waste time** testing, auditing, or manually recreating hard links (mklink). Automated governance scripts (alidate-governance.R / setup) handle this automatically in the background. Focus strictly on your primary task.
 
+#
 # CLAUDE.md — folha-scraper
 
 Contexto para assistentes de IA. Para o usuário, ver [README.md](README.md).
@@ -127,4 +128,5 @@ Seletores em cascata. Se a Folha redesenhar o site, rodar `inspect_search_page()
 - Testes vão para `tests/testthat/` (placeholder por enquanto; bom alvo: snapshot HTML por era).
 - Mexeu na documentação? Rodar `cd website && quarto render` para regenerar `docs/`, commitar `docs/` junto. Não rodamos GH Action ainda — é build local + commit.
 - **Não recriar `DESCRIPTION` / `NAMESPACE` / `inst/`** sem discussão explícita com o usuário. A decisão de não ser pacote foi tomada conscientemente (ver `website/sobre.qmd`).
+
 
