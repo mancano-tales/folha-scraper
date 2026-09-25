@@ -1,0 +1,5 @@
+# Dados fora do git (convenção .data-source; resolvedor canônico em tools/data-source/ do mancano-repo-hub,
+# cópia em R/data_source.R). Cópia canônica no Google Drive (MANCANO_DRIVE_ROOT) e segunda cópia no SSD
+# (MANCANO_SSD_ROOT), mesmos caminhos relativos. Uso: source("R/data_source.R"); data_path("nome").
+# Snapshot (backup) do banco; o app continua usando data/folha.sqlite local.
+folha_db_snapshot = drive:projects/folha-scraper/data

@@ -141,6 +141,13 @@ O script popula a tabela `articles` e cria um projeto com as keywords e classifi
 
 ---
 
+## Backup do banco fora do git
+
+O banco `data/folha.sqlite` é local e ignorado pelo git; o app sempre lê e escreve nele. Uma cópia
+consistente (snapshot) fica no Google Drive do autor e no SSD externo, apontada pelo arquivo
+`.data-source` (`folha_db_snapshot`, resolvido por `R/data_source.R`). É backup, não fonte de trabalho:
+quem clona o repositório começa com um banco novo, como sempre.
+
 ## Roadmap
 
 - **v0.2** ✅ — Shiny app, projetos, coleta, corpus browser
